@@ -1,0 +1,11 @@
+Pattern 6 Research Proposal
+
+Topic Proposal: Exploring the used cars market of Belarus and building up a model to predict the price of a car based on the specific parameters.
+Specific; Build a model to find the relationship between cars prices on different factors that includes numerical, categorical values and further use the model to predict car prices. Features we will focus on are the following; color, transmission, odometer value, year of production, body type, number of photos and duration of days.
+Measurable: We will use specific measuring metrics such as r-square, MAE, MSE and RMSE. 
+Achievable: Based on the preliminary analysis that we concluded it is possible to find a pattern. 
+Relevant: The research can definitely help the seller and buyers in the used car market to make an informed decision about the price of the vehicle. We can extend the research to nearby markets with similar characteristics and market dynamics
+Time Oriented: The initial analysis will be completed by November , 2nd with the presentation. The modelling part will be completed by November 9.
+The source of our data set: Used cars catalog-Belarus on Kaggle: (https://www.kaggle.com/lepchenkov/usedcarscatalog?select=cars.csv). 
+The number of observations that we have is 38,500. 
+The link to our GitHub repository: https://github.com/laihanel/PatternSix. 
