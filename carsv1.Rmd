@@ -13,26 +13,56 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
+###Data Cleaning
 ```{r cars}
-current_dir = 'D:/GWU/Aihan/DATS 6101 Data Science/Mid-Project'
-setwd(current_dir)
+library(dplyr)
+
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
-df2 = df[c('manufacturer_name', 'model_name', 'transmission', 'color', 'odometer_value', 'year_produced', 'engine_capacity', 'body_type', 'price_usd', 'number_of_photos', 'up_counter', 'duration_listed')]
 
-df2 = df[c( 'transmission', 'color', 'odometer_value', 'year_produced', 'engine_capacity', 'body_type', 'price_usd', 'number_of_photos', 'up_counter', 'duration_listed')]
-summary(df2)
+df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
+"state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
 
 
-boxplot(df['manufacturer_name'], df['price_usd'])
-car_lm = lm(price_usd ~ ., data = df2)
-summary(car_lm)
 ```
+
+Checking for the the facors and numerical features   
+```{r}
+str(df)
+```
+Looks perfectly fine
+
+###Check for nulls
+```{r}
+
+colSums(is.na(df))
+
+```
+#Enigine Capicity has 10 null values
+```{r}
+#Droping the rows with null values 
+df <- df[complete.cases(df), ]
+```
+
+##Target valrible distribution
+```{r}
+library(ggplot2)
+#p <-  ggplot(df, aes(price_usd)) 
+p + geom_boxplot()
+#df %>%  ggplot( aes(x=manufacturer_name, y=price_usd)) +   geom_boxplot(outlier.colour="red", #outlier.shape=8,outlier.size=4)
+#p + geom_point(x='price_usd',y='manufacturer_name')
+```
+
 
 ## Including Plots
 
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
+
+boxplot(df['manufacturer_name'], df['price_usd'])
+car_lm = lm(price_usd ~ ., data = df2)
+
+
 library(s20x)
 pairs20x(df2)
 ```
@@ -45,6 +75,17 @@ corrplot(df2)
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 ```{r}
+#loadPkg("leaps")
+reg.best10 <- leaps::regsubsets(price_usd~. , data = df, nvmax = 10, nbest = 1, method = "exhaustive")  
 
+# leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
+#The plot will show the Adjust R^2 when using the variables across the bottom
+plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
+plot(reg.best10, scale = "r2", main = "R^2")
+# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
+plot(reg.best10, scale = "bic", main = "BIC")
+plot(reg.best10, scale = "Cp", main = "Cp")
+summary(reg.best10)
 ```
+
 
