@@ -21,9 +21,15 @@ df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
 df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
 "state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
-
+names(df)[names(df) == 'price_usd'] <- 'price'
 
 ```
+
+
+```{r}
+names(df)[names(df) == 'price_usd'] <- 'price'
+```
+
 
 Checking for the the facors and numerical features   
 ```{r}
@@ -47,10 +53,48 @@ df <- df[complete.cases(df), ]
 ```{r}
 library(ggplot2)
 #p <-  ggplot(df, aes(price_usd)) 
-p + geom_boxplot()
+#p + geom_boxplot()
+p + geom_density()
 #df %>%  ggplot( aes(x=manufacturer_name, y=price_usd)) +   geom_boxplot(outlier.colour="red", #outlier.shape=8,outlier.size=4)
 #p + geom_point(x='price_usd',y='manufacturer_name')
 ```
+
+We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
+Let try the box-Cox transformation to normalize the target variable
+
+```{r}
+library(MASS)
+y = df$price
+df %>% ggplot(aes(price)) + geom_density()
+
+result = boxcox(y~1)
+#Getting the optimal lambda value
+mylambda = result$x[which.max(result$y)]
+mylambda
+#Transforming the price to new feature using the lambda value
+# To get the original price, perform inverse operation to the one below
+price_normal = (y^mylambda-1)/mylambda
+data_frame(val=y2) %>% ggplot(aes(val)) + geom_density()
+
+df <- cbind(df,price_normal)
+```
+
+```{r}
+#library("corrplot")
+#dfcorr <- cor(df)
+#corrplot.mixed(dfcorr)
+
+library(corrplot)
+library(tidyverse)
+
+df %>% select_if(is.numeric)->cars_numerical
+
+corrplot(cor(cars_numerical), method = 'number')
+
+
+```
+
+
 
 
 ## Including Plots
