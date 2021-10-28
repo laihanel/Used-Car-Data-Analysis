@@ -7,39 +7,146 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+###Data Import and Cleaning
+## Importing Data
+```{r cars include=FALSE}
+library(dplyr)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-current_dir = 'D:/GWU/Aihan/DATS 6101 Data Science/Mid-Project'
-setwd(current_dir)
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
-df2 = df[c('manufacturer_name', 'model_name', 'transmission', 'color', 'odometer_value', 'year_produced', 'engine_capacity', 'body_type', 'price_usd', 'number_of_photos', 'up_counter', 'duration_listed')]
 
-df2 = df[c( 'transmission', 'color', 'odometer_value', 'year_produced', 'engine_capacity', 'body_type', 'price_usd', 'number_of_photos', 'up_counter', 'duration_listed')]
-summary(df2)
+df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
+"state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
+names(df)[names(df) == 'price_usd'] <- 'price'
 
-
-boxplot(df['manufacturer_name'], df['price_usd'])
-car_lm = lm(price_usd ~ ., data = df2)
-summary(car_lm)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+## Renaming features
+```{r include=FALSE}
+names(df)[names(df) == 'price_usd'] <- 'price'
+```
+
+
+Checking for the the facors and numerical features   
+```{r include=FALSE}
+str(df)
+```
+Looks perfectly fine
+
+## Check for nulls
+```{r include=FALSE}
+
+colSums(is.na(df))
+
+```
+
+Engine Capacity has 10 null values
+```{r include=FALSE}
+#Droping the rows with null values 
+df <- df[complete.cases(df), ]
+```
+
+### Descriptive Analysis
+
+## Summary of Dataset
+```{r include=FALSE}
+library(corrplot)
+library(tidyverse)
+
+df %>% select_if(is.numeric)->cars_numerical
+summary(cars_numerical)
+```
+
+#The dataset is collected from various web resources in order to explore the used cars market and try to build a model that effectively predicts the price of the car based on its parameters (both numerical and categorical)
+
+#The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features
+
+## Graphical representations
+# boxplot/scatter plot etc
+
+
+
+##Target valrible distribution(normality test)
+```{r}
+library(ggplot2)
+p <-  ggplot(df, aes(price)) 
+#p + geom_boxplot()
+p + geom_density()
+#df %>%  ggplot( aes(x=manufacturer_name, y=price_usd)) +   geom_boxplot(outlier.colour="red", #outlier.shape=8,outlier.size=4)
+#p + geom_point(x='price_usd',y='manufacturer_name')
+qqplot(price)
+```
+
+
+
+
+### Exploratory analysis
+## Initial Correlations
+
+# T-test for continuous variables
+```{r}
+#library("corrplot")
+#dfcorr <- cor(df)
+#corrplot.mixed(dfcorr)
+
+
+corrplot(cor(cars_numerical), method = 'number')
+
+
+```
+
+# Chi-Square test
 
 ```{r pressure, echo=FALSE}
-library(s20x)
-pairs20x(df2)
+
+#boxplot(df['manufacturer_name'], df['price'])
+#car_lm = lm(price ~ ., data = df2)
+
+
+#library(s20x)
+#pairs20x(df2)
 ```
 ```{r}
-library(ezids)
-loadPkg("corrplot")
-corrplot(df2)
+#library(ezids)
+#loadPkg("corrplot")
+#corrplot(df2)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+### 2nd Phase( Skipped for now)
+###Initial Model and checking for planarity
+```{r}
+#loadPkg("leaps")
+#reg.best10 <- leaps::regsubsets(price_usd~. , data = df, nvmax = 10, nbest = 1, method = "exhaustive")  
+
+# leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
+#The plot will show the Adjust R^2 when using the variables across the bottom
+#plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
+#plot(reg.best10, scale = "r2", main = "R^2")
+# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
+#plot(reg.best10, scale = "bic", main = "BIC")
+#plot(reg.best10, scale = "Cp", main = "Cp")
+#summary(reg.best10)
+```
+
+
+We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
+Let try the box-Cox transformation to normalize the target variable
+
+```{r}
+library(MASS)
+y = df$price
+df %>% ggplot(aes(price)) + geom_density()
+
+result = boxcox(y~1)
+#Getting the optimal lambda value
+mylambda = result$x[which.max(result$y)]
+mylambda
+#Transforming the price to new feature using the lambda value
+# To get the original price, perform inverse operation to the one below
+price_normal = (y^mylambda-1)/mylambda
+data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
+
+df <- cbind(df,price_normal)
+```
+
