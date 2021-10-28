@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ## Importing Data
-```{r cars include=FALSE}
+```{r cars, include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
