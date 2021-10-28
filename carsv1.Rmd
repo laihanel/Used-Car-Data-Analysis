@@ -10,7 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Data Import and Cleaning
 ## Importing Data
 ```{r cars include=FALSE}
-library(dplyr)
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
@@ -59,6 +58,20 @@ summary(cars_numerical)
 
 #The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features
 
+
+## Descriptive Statistics
+```{r}
+summary(cars_numerical)
+install.packages("fBasics")
+
+library(fBasics)
+
+basicStats(cars_numerical)
+
+
+
+
+```
 
 
 ##Target valrible distribution
