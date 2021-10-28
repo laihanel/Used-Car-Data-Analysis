@@ -7,7 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-###Data Import and Cleaning
+### Data Import and Cleaning
 ## Importing Data
 ```{r cars include=FALSE}
 library(dplyr)
@@ -45,9 +45,7 @@ Engine Capacity has 10 null values
 #Droping the rows with null values 
 df <- df[complete.cases(df), ]
 ```
-
 ### Descriptive Analysis
-
 ## Summary of Dataset
 ```{r include=FALSE}
 library(corrplot)
@@ -61,12 +59,9 @@ summary(cars_numerical)
 
 #The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features
 
-## Graphical representations
-# boxplot/scatter plot etc
 
 
-
-##Target valrible distribution(normality test)
+##Target valrible distribution
 ```{r}
 library(ggplot2)
 p <-  ggplot(df, aes(price)) 
@@ -78,12 +73,11 @@ qqplot(price)
 ```
 
 
-
-
 ### Exploratory analysis
 ## Initial Correlations
 
 # T-test for continuous variables
+
 ```{r}
 #library("corrplot")
 #dfcorr <- cor(df)
@@ -96,6 +90,7 @@ corrplot(cor(cars_numerical), method = 'number')
 ```
 
 # Chi-Square test
+
 
 ```{r pressure, echo=FALSE}
 
