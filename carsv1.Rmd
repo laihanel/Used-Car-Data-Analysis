@@ -26,7 +26,7 @@ names(df)[names(df) == 'price_usd'] <- 'price'
 ```
 
 
-Checking for the the facors and numerical features   
+Checking for the the factors and numerical features   
 ```{r include=FALSE}
 str(df)
 ```
@@ -68,8 +68,6 @@ library(fBasics)
 basicStats(cars_numerical)
 
 
-
-
 ```
 
 
@@ -102,7 +100,6 @@ corrplot(cor(cars_numerical), method = 'number')
 
 
 ```{r pressure, echo=FALSE}
-
 #boxplot(df['manufacturer_name'], df['price'])
 #car_lm = lm(price ~ ., data = df2)
 
