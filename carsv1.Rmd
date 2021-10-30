@@ -70,9 +70,31 @@ basicStats(cars_numerical)
 
 ```
 
+
+## two population μ difference 
+```{r T test}
+summary(df$has_warranty)
+has = subset(df, subset = df$has_warranty == "True")
+hasnot = subset(df, subset = df$has_warranty == "False")
+t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
+
+
+summary(df$engine_type)
+diesel = subset(df, subset = df$engine_type == "diesel")
+gas = subset(df, subset = df$engine_type == "gasoline")
+t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
+
+```
+
+Because the p value is < 0.01, we reject the null that whether has warranties does not affect car prices.
+
+Because the p value is < 0.01, we reject the null that diesel engine and gasoline engine have the same price.
+
+
+
 ## Test of Independence and Homogeneity
 ```{r}
-contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
+(contgcTbl1 = table(df$manufacturer_name, df$has_warranty))
 
 (Xsq1 = chisq.test(contgcTbl1))
 
