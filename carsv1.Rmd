@@ -94,7 +94,7 @@ Because the p value is < 0.01, we reject the null that diesel engine and gasolin
 
 ## Test of Independence and Homogeneity
 ```{r}
-(contgcTbl1 = table(df$manufacturer_name, df$has_warranty))
+contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
 
 (Xsq1 = chisq.test(contgcTbl1))
 
@@ -112,17 +112,20 @@ contgcTbl4 = table(df$color, df$transmission)
 (Xsq4 = chisq.test(contgcTbl4))
 
 ```
-Because many of the expected values are so small, the approximation of p may not be right.
+For table one, two, three, because many of the expected values are so small, the approximation of p may not be right.
 
+For table four, because p value < 0.01, we reject that null that colors and transmission are independent.
 
 
 ## ANOVA test
 ```{r}
-(df.aov = aov(price ~ manufacturer_name * color, df))
-summary(df.aov)
+(df_aov = aov(price ~ manufacturer_name * color, df))
+summary(df_aov)
+
+TukeyHSD(df_aov)
 
 ```
-Because the p < 0.001, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
+Because the p < 0.01, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
 
 
 ##Target valrible distribution
