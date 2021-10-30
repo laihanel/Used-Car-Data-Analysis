@@ -70,6 +70,38 @@ basicStats(cars_numerical)
 
 ```
 
+## Test of Independence and Homogeneity
+```{r}
+contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
+
+(Xsq1 = chisq.test(contgcTbl1))
+
+
+contgcTbl2 = table(df$manufacturer_name, df$body_type)
+
+(Xsq2 = chisq.test(contgcTbl2))
+
+contgcTbl3 = table(df$manufacturer_name, df$color)
+
+(Xsq3 = chisq.test(contgcTbl3))
+
+contgcTbl4 = table(df$color, df$transmission)
+
+(Xsq4 = chisq.test(contgcTbl4))
+
+```
+Because many of the expected values are so small, the approximation of p may not be right.
+
+
+
+## ANOVA test
+```{r}
+(df.aov = aov(price ~ manufacturer_name * color, df))
+summary(df.aov)
+
+```
+Because the p < 0.001, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
+
 
 ##Target valrible distribution
 ```{r}
