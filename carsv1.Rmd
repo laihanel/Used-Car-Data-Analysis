@@ -99,6 +99,52 @@ corrplot(cor(cars_numerical), method = 'number')
 ```
 
 ## Including Plots
+## Normality tests
+
+This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000 in __R__,and our dataset is more extensive than this value, so we will use the *Kolmogorov-Smirnov (K-S) normality test* instead.
+
+```{r, fig.height=10}
+library(gridExtra)
+plot1 = ggplot(cars_numerical, aes(sample = price)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of price')
+plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(bins=30) + labs(title = 'Histogram of price')
+
+```
+
+As we can find in the quantile-quantile plot and the histogram,`price` is not normally distributed, if we want use price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
+
+```{r}
+plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
+plot4 = ggplot(cars_numerical, aes(x = odometer_value)) + geom_histogram(bins=30) + labs(title = 'Histogram of odometer_value')
+
+plot5 = ggplot(cars_numerical, aes(sample = year_produced)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of year_produced')
+plot6 = ggplot(cars_numerical, aes(x = year_produced)) + geom_histogram(bins=30) + labs(title = 'Histogram of year_produced')
+
+grid.arrange(plot3, plot4, plot5, plot6, ncol=2, nrow=2)
+```
+
+```{r}
+plot7 = ggplot(cars_numerical, aes(sample = engine_capacity)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of engine_capacity')
+plot8 = ggplot(cars_numerical, aes(x = engine_capacity)) + geom_histogram(bins=30) + labs(title = 'Histogram of engine_capacity')
+
+plot9 = ggplot(cars_numerical, aes(sample = number_of_photos)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of number_of_photos')
+plot10 = ggplot(cars_numerical, aes(x = number_of_photos)) + geom_histogram(bins=30) + labs(title = 'Histogram of number_of_photos')
+
+grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
+```
+
+The Q-Q plots and histograms also show evidence of non-normality. The `odometer_value`, `engine_capacity` and `number_of_photos` are right-skewed, while `year_produced` is left-skewed.
+
+Now we apply the *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
+
+```{r, warning=FALSE}
+ks.test(df$price, 'pnorm', mean=mean(df$price), sd=sd(df$price))
+ks.test(df$odometer_value, 'pnorm', mean=mean(df$odometer_value), sd=sd(df$odometer_value))
+ks.test(df$year_produced, 'pnorm', mean=mean(df$year_produced), sd=sd(df$year_produced))
+ks.test(df$engine_capacity, 'pnorm', mean=mean(df$engine_capacity), sd=sd(df$engine_capacity))
+ks.test(df$number_of_photos, 'pnorm', mean=mean(df$number_of_photos), sd=sd(df$number_of_photos))
+```
+
+The p-value of all the numeric variables are < 2e-16 which is less than 0.05, therefore we conclude that the distributions of all our numeric variables are significantly different from normal distribution. They have the same results with Q-Q plots and histograms.
 
 
 ```{r pressure, echo=FALSE}
