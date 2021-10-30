@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ## Importing Data
-```{r cars include=FALSE}
+```{r cars, include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
@@ -26,7 +26,7 @@ names(df)[names(df) == 'price_usd'] <- 'price'
 ```
 
 
-Checking for the the facors and numerical features   
+Checking for the the factors and numerical features   
 ```{r include=FALSE}
 str(df)
 ```
@@ -68,9 +68,61 @@ library(fBasics)
 basicStats(cars_numerical)
 
 
+```
 
+
+## two population μ difference 
+```{r T test}
+summary(df$has_warranty)
+has = subset(df, subset = df$has_warranty == "True")
+hasnot = subset(df, subset = df$has_warranty == "False")
+t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
+
+
+summary(df$engine_type)
+diesel = subset(df, subset = df$engine_type == "diesel")
+gas = subset(df, subset = df$engine_type == "gasoline")
+t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 
 ```
+
+Because the p value is < 0.01, we reject the null that whether has warranties does not affect car prices.
+
+Because the p value is < 0.01, we reject the null that diesel engine and gasoline engine have the same price.
+
+
+
+## Test of Independence and Homogeneity
+```{r}
+(contgcTbl1 = table(df$manufacturer_name, df$has_warranty))
+
+(Xsq1 = chisq.test(contgcTbl1))
+
+
+contgcTbl2 = table(df$manufacturer_name, df$body_type)
+
+(Xsq2 = chisq.test(contgcTbl2))
+
+contgcTbl3 = table(df$manufacturer_name, df$color)
+
+(Xsq3 = chisq.test(contgcTbl3))
+
+contgcTbl4 = table(df$color, df$transmission)
+
+(Xsq4 = chisq.test(contgcTbl4))
+
+```
+Because many of the expected values are so small, the approximation of p may not be right.
+
+
+
+## ANOVA test
+```{r}
+(df.aov = aov(price ~ manufacturer_name * color, df))
+summary(df.aov)
+
+```
+Because the p < 0.001, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
 
 
 ##Target valrible distribution
@@ -148,7 +200,6 @@ The p-value of all the numeric variables are < 2e-16 which is less than 0.05, th
 
 
 ```{r pressure, echo=FALSE}
-
 #boxplot(df['manufacturer_name'], df['price'])
 #car_lm = lm(price ~ ., data = df2)
 
