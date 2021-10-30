@@ -253,3 +253,9 @@ data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
 df <- cbind(df,price_normal)
 ```
 
+```{r}
+library(ggplot2)
+
+df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year') + theme(plot.title = element_text(hjust = 0.5))
+```
+
