@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ## Importing Data
-```{r cars include=FALSE}
+```{r include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
@@ -60,17 +60,68 @@ df %>% select_if(is.numeric)->cars_numerical
 
 ## Descriptive Statistics
 ```{r}
-summary(cars_numerical)
-install.packages("fBasics")
+#summary(cars_numerical)
+#install.packages("fBasics")
 
-library(fBasics)
+#library(fBasics)
 
-basicStats(cars_numerical)
+#basicStats(cars_numerical)
+
+```
+
+```{r}
+library(ggplot2)
+
+df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year') + theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+df %>%  ggplot(aes(year_produced)) + geom_bar(fill = "#00AFBB") + ggtitle('Number of cars available per year') + theme(plot.title = element_text(hjust = 0.5))
+```
+```{r}
+
+df %>% ggplot(aes(engine_type, price)) + geom_boxplot()
+```
+
+```{r}
+df %>% ggplot(aes(has_warranty, price)) + geom_boxplot()
+```
 
 
+```{r}
+df %>% ggplot(aes(state, price)) + geom_boxplot()
+```
+
+
+
+#Does Number of photot really make a change on the price
+```{r}
+df %>% ggplot(aes(number_of_photos, price)) + geom_smooth()
+```
+```{r}
+df %>% ggplot(aes(color,price))+geom_boxplot()
+
+df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB")
 
 
 ```
+```{r}
+df %>% ggplot(aes(transmission,price))+geom_boxplot()
+```
+```{r}
+
+df %>% group_by(body_type) %>% summarise(body_price_mean = mean(price))%>% ggplot(aes(x = reorder(body_type, -body_price_mean),body_price_mean))+geom_col()
+```
+
+```{r}
+df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity))+geom_boxplot()
+```
+```{r}
+
+corrplot(cor(cars_numerical), method = 'number')
+
+```
+
 
 
 ##Target valrible distribution
@@ -93,12 +144,17 @@ p + geom_density()
 #corrplot.mixed(dfcorr)
 
 
-corrplot(cor(cars_numerical), method = 'number')
 
 
 ```
 
 ## Including Plots
+
+```{r}
+
+unique(df$manufacturer_name)
+```
+
 
 
 ```{r pressure, echo=FALSE}
