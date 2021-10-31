@@ -94,7 +94,7 @@ Because the p value is < 0.01, we reject the null that diesel engine and gasolin
 
 ## Test of Independence and Homogeneity
 ```{r}
-(contgcTbl1 = table(df$manufacturer_name, df$has_warranty))
+contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
 
 (Xsq1 = chisq.test(contgcTbl1))
 
@@ -112,17 +112,20 @@ contgcTbl4 = table(df$color, df$transmission)
 (Xsq4 = chisq.test(contgcTbl4))
 
 ```
-Because many of the expected values are so small, the approximation of p may not be right.
+For table one, two, three, because many of the expected values are so small, the approximation of p may not be right.
 
+For table four, because p value < 0.01, we reject that null that colors and transmission are independent.
 
 
 ## ANOVA test
 ```{r}
-(df.aov = aov(price ~ manufacturer_name * color, df))
-summary(df.aov)
+(df_aov = aov(price ~ manufacturer_name * color, df))
+summary(df_aov)
+
+TukeyHSD(df_aov)
 
 ```
-Because the p < 0.001, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
+Because the p < 0.01, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
 
 
 ##Target valrible distribution
@@ -151,6 +154,7 @@ corrplot(cor(cars_numerical), method = 'number')
 ```
 
 ## Including Plots
+This is a test for github. Please disregards this comments. 
 ## Normality tests
 
 This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000 in __R__,and our dataset is more extensive than this value, so we will use the *Kolmogorov-Smirnov (K-S) normality test* instead.
@@ -248,5 +252,11 @@ price_normal = (y^mylambda-1)/mylambda
 data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
 
 df <- cbind(df,price_normal)
+```
+
+```{r}
+library(ggplot2)
+
+df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
