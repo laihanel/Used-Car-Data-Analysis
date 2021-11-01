@@ -19,15 +19,15 @@ output:
 # some of common options (and the defaults) are: 
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
-# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
-knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+# knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 # options(scipen=9, digits = 3) 
 # ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
 # use scipen=999 to prevent scientific notation at all times
 ```
 
-## Importing Data
+# Data Import and Cleaning
 ```{r cars, include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
@@ -53,18 +53,16 @@ Looks perfectly fine
 
 ## Data Preprocessing
 ```{r include=FALSE}
-
 colSums(is.na(df))
-
 ```
 
-Engine Capacity has 10 null values
+Engine Capacity has 10 null values, we dropped the rows with null values.
 ```{r include=FALSE}
 #Droping the rows with null values 
 df <- df[complete.cases(df), ]
 ```
 
-# Summary of Dataset
+## Summary of Dataset
 ```{r include=FALSE}
 library(corrplot)
 library(tidyverse)
@@ -77,44 +75,38 @@ The dataset is collected from various web resources in order to explore the used
 The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features
 
 
-## Descriptive Statistics
-```{r}
-summary(cars_numerical)
-
+# Exploratory Data Analysis
+```{r echo=TRUE}
+# summary(cars_numerical)
 library(fBasics)
-
 basicStats(cars_numerical)
-
-
 ```
 
+Table above give us the basic statistic measures of numeric data. 
 
-## Two population μ difference 
-
-
+## Mean Difference Between Variables
+### Warranty vs Price
 ```{r}
 df %>% ggplot(aes(has_warranty, price, fill=has_warranty)) + geom_boxplot() + ggtitle('Has_Warranty vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
 The graph indicates a substantial difference of mean between the two subsets
 Let's run a t-test to check the statistical significance 
-```{r T test}
+```{r T test, echo=TRUE}
 summary(df$has_warranty)
-has = subset(df, subset = df$has_warranty == "True")
-hasnot = subset(df, subset = df$has_warranty == "False")
+has = subset(df, has_warranty == 1)
+hasnot = subset(df, has_warranty == 0)
 t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
-
 ```
 The t-test on the has_warranty feature suggest strong statistical significance and thus we can reject null hypothesis, suggesting that there is a difference between the true means of the two subsets.
 
 
-
-## Lets check if the true mean of price for the two engine types is equal
+###  Engine Types vs Price
 ```{r}
 df %>% ggplot(aes(engine_type, price,fill=engine_type)) + geom_boxplot()+ ggtitle('Engine_type vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-```{r}
+```{r echo=TRUE}
 summary(df$engine_type)
 diesel = subset(df, subset = df$engine_type == "diesel")
 gas = subset(df, subset = df$engine_type == "gasoline")
@@ -125,7 +117,7 @@ The t-test suggest there is a difference between the true means of the two subse
 
 
 
-## Test of Independence and Homogeneity
+## Independence and Homogeneity
 ```{r}
 contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
 
@@ -150,24 +142,25 @@ For table one, two, three, because many of the expected values are so small, the
 For table four, because p value < 0.01, we reject that null that colors and transmission are independent.
 
 
-
-## Does the Color influnce the prices
+## Influential Feactures of Prices
+### Top 10 Colors by Mean Price
 ```{r}
 df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB") + labs(x='Color',y='Price mean') + ggtitle('Color vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
-## Does the Body type influnce the Prices
+
+### Top 10 Body Types by Mean Price
 ```{r}
 df %>% group_by(body_type) %>% summarise(body_price_mean = mean(price))%>% ggplot(aes(x = reorder(body_type, -body_price_mean),body_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Body Type', y='Mean of price') + ggtitle('Body Type vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-## Lets check the top 10 manufacturer by mean price
+### Top 10 Manufacturers by Mean Price
 ```{r}
 df2 = df %>% group_by(manufacturer_name) %>% summarise(manuf_price_mean = mean(price)) %>% arrange(desc(manuf_price_mean)) 
 df2 %>% slice(1:10) %>%  ggplot(aes(x = reorder(manufacturer_name, -manuf_price_mean),manuf_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Manufacturer', y='Mean of price')  + ggtitle('Manufacturer vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-
 From the initial analysis, for the above 3 plots there seems to be difference among the true means of thier respective groups. Lets run an anova test on each of the case to check the hypothesis
+
 ```{r}
 df_aov_1 = aov(price ~  color , df)
 summary(df_aov_1)
@@ -179,17 +172,21 @@ df_aov_2 = aov(price ~  body_type , df)
 summary(df_aov_2)
 
 ```
+
 For all the three cases there seems to be statistically significant difference the the true means
 The high statistical significance suggest that there is a difference between the true mean of the prices for differently colored vehicles, for different manufacturer and for different body types
 
-## Does the interaction manufacturer affect the price
-```{r}
+### interaction of manufacturer and body type vs price
+
+```{r echo=TRUE}
 df_aov_3 = aov(price ~   manufacturer_name * body_type , df)
 summary(df_aov_3)
 ```
 
+## Interactions
+### ANOVA test
 
-## Let's try to see if there is any interaction between the manufacturer_name and the body_type with price
+Let's try to see if there is any interaction between the manufacturer_name and the body_type with price
 ```{r}
 df_aov = aov(price ~  manufacturer_name * body_type , df)
 summary(df_aov)
@@ -202,13 +199,11 @@ summary(df_aov)
 
 The high statistical significance show that the interaction term can explain the variation in the price variable.
 
-
 ```{r}
 df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
 
-## ANOVA test
 ```{r}
 #(df_aov = aov(price ~ manufacturer_name * color, df))
 #summary(df_aov)
@@ -219,55 +214,41 @@ df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=
 Because the p < 0.01, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
 
 
-##Target valrible distribution
-```{r}
-library(ggplot2)
-p <-  ggplot(df, aes(price)) 
-#p + geom_boxplot()
-p + geom_density()
-#df %>%  ggplot( aes(x=manufacturer_name, y=price_usd)) +   geom_boxplot(outlier.colour="red", #outlier.shape=8,outlier.size=4)
-#p + geom_point(x='price_usd',y='manufacturer_name')
-```
-
-
-
-
-
+### Correlation Plot
 ```{r}
 corrplot(cor(cars_numerical), method = 'number')
 ```
 
-## Including Plots
-This is a test for github. Please disregards this comments. 
 ## Normality tests
 
 This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000 in __R__,and our dataset is more extensive than this value, so we will use the *Kolmogorov-Smirnov (K-S) normality test* instead.
 
-```{r, fig.height=10}
+```{r, fig.height=3}
 library(gridExtra)
-plot1 = ggplot(cars_numerical, aes(sample = price)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of price')
-plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(bins=30) + labs(title = 'Histogram of price')
+plot1 = ggplot(cars_numerical, aes(sample = price)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of price') 
+plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of price')
 
+grid.arrange(plot1, plot2, ncol=2, nrow=1)
 ```
 
 As we can find in the quantile-quantile plot and the histogram,`price` is not normally distributed, if we want use price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
 
 ```{r}
-plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
-plot4 = ggplot(cars_numerical, aes(x = odometer_value)) + geom_histogram(bins=30) + labs(title = 'Histogram of odometer_value')
+plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
+plot4 = ggplot(cars_numerical, aes(x = odometer_value)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of odometer_value')
 
-plot5 = ggplot(cars_numerical, aes(sample = year_produced)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of year_produced')
-plot6 = ggplot(cars_numerical, aes(x = year_produced)) + geom_histogram(bins=30) + labs(title = 'Histogram of year_produced')
+plot5 = ggplot(cars_numerical, aes(sample = year_produced)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of year_produced')
+plot6 = ggplot(cars_numerical, aes(x = year_produced)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of year_produced')
 
 grid.arrange(plot3, plot4, plot5, plot6, ncol=2, nrow=2)
 ```
 
 ```{r}
-plot7 = ggplot(cars_numerical, aes(sample = engine_capacity)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of engine_capacity')
-plot8 = ggplot(cars_numerical, aes(x = engine_capacity)) + geom_histogram(bins=30) + labs(title = 'Histogram of engine_capacity')
+plot7 = ggplot(cars_numerical, aes(sample = engine_capacity)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of engine_capacity')
+plot8 = ggplot(cars_numerical, aes(x = engine_capacity)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of engine_capacity')
 
-plot9 = ggplot(cars_numerical, aes(sample = number_of_photos)) + stat_qq() + stat_qq_line() + labs(title = 'Q-Q plot of number_of_photos')
-plot10 = ggplot(cars_numerical, aes(x = number_of_photos)) + geom_histogram(bins=30) + labs(title = 'Histogram of number_of_photos')
+plot9 = ggplot(cars_numerical, aes(sample = number_of_photos)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of number_of_photos')
+plot10 = ggplot(cars_numerical, aes(x = number_of_photos)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of number_of_photos')
 
 grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
 ```
@@ -302,7 +283,7 @@ The p-value of all the numeric variables are < 2e-16 which is less than 0.05, th
 ```
 
 
-### 2nd Phase( Skipped for now)
+# 2nd Phase( Skipped for now)
 ```{r}
 #loadPkg("leaps")
 #reg.best10 <- leaps::regsubsets(price_usd~. , data = df, nvmax = 10, nbest = 1, method = "exhaustive")  
@@ -316,6 +297,18 @@ The p-value of all the numeric variables are < 2e-16 which is less than 0.05, th
 #plot(reg.best10, scale = "Cp", main = "Cp")
 #summary(reg.best10)
 ```
+
+##Target valrible distribution
+```{r}
+library(ggplot2)
+p <-  ggplot(df, aes(price)) 
+#p + geom_boxplot()
+p + geom_density()
+#df %>%  ggplot( aes(x=manufacturer_name, y=price_usd)) +   geom_boxplot(outlier.colour="red", #outlier.shape=8,outlier.size=4)
+#p + geom_point(x='price_usd',y='manufacturer_name')
+```
+
+
 
 
 We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
