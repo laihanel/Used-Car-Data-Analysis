@@ -89,23 +89,31 @@ The table above gives us the basic statistic measures of numeric data. There are
 ```{r}
 corrplot(cor(cars_numerical), method = 'number')
 ```
+
 The year_produced feature has the highest positive correlation with the price
 Lets try to plot it with a graph
 
 ```{r}
 library(ggplot2)
 
-df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year') + theme(plot.title = element_text(hjust = 0.5))
+df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year', x="year produced", y = "mean price per year") + theme(plot.title = element_text(hjust = 0.5))
 ```
 There is a very interesting pattern we can observe. The vintage cars are pricier than the new cars. 
 After around 1985, the price increase steadily.
 
 
-Do we see a trend for the mean price with Engine Capacity
+
 ```{r}
-df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capicity = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=engine_capacity,y=mean_price_per_capicity)) +  geom_point(color = "#00AFBB") + labs(title='Avg Price of Car for engine capicity', x='Engine Capicity', y='Mean Price') + theme(plot.title = element_text(hjust = 0.5))
+df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capicity = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=engine_capacity,y=mean_price_per_capicity)) +  geom_point(color = "#00AFBB") + labs(title='Avg Price of Car for engine capacity', x='Engine Capacity', y='Mean Price') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
+```{r}
+df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
+cor(df4)
+#corrplot(cor(cars_numerical), method = 'number')
+```
+
+Do we see a trend for the mean price with Engine Capacity
 
 Above you can see the scatterplot relationship graph between mean price and engine capacity. The graph clearly displays a positive correlation between the two variables. The correlation comes down to approximately '0.6'. Please note that this is mean price, not price. Price-Engine capacity correlation that we found was 0.30. This could be explained by the outliers that are found in higher engine capacity. 
 
@@ -116,6 +124,9 @@ cor(df4)
 #corrplot(cor(cars_numerical), method = 'number')
 ```
 
+```{r}
+df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
+```
 
 ## Mean Difference Between Variables
 ### Warranty vs Price
@@ -149,10 +160,6 @@ t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 The t-test suggest there is a difference between the true means of the two subsets(Diesel,Gas).
 
 
-```{r}
-df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
-```
-
 
 ## Independence and Homogeneity
 ```{r}
@@ -169,11 +176,11 @@ contgcTbl3 = table(df$manufacturer_name, df$color)
 
 (Xsq3 = chisq.test(contgcTbl3))
 
-contgcTbl4 = table(df$color, df$transmission)
+(contgcTbl4 = table(df$color, df$transmission))
 
 (Xsq4 = chisq.test(contgcTbl4))
 
-contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable)
+(contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable))
 
 (Xsq5 = chisq.test(contgcTbl5))
 
@@ -185,12 +192,12 @@ For table 1, 2 and 3, because many of the expected values are so small, the appr
 
 
 ## Influential Feactures of Prices
-### Top 10 Colors by Mean Price
+### Colors by Mean Price
 ```{r}
 df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB") + labs(x='Color',y='Price mean') + ggtitle('Color vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-### Top 10 Body Types by Mean Price
+### Body Types by Mean Price
 ```{r}
 df %>% group_by(body_type) %>% summarise(body_price_mean = mean(price))%>% ggplot(aes(x = reorder(body_type, -body_price_mean),body_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Body Type', y='Mean of price') + ggtitle('Body Type vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
@@ -220,9 +227,6 @@ summary(df_aov_2)
 For all the three cases there seems to be statistically significant difference the the true means
 The high statistical significance suggest that there is a difference between the true mean of the prices for differently colored vehicles, for different manufacturer and for different body types
 
-```{r}
-df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
-```
 
 
 ### Two Way ANOVA
