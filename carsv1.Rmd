@@ -84,6 +84,39 @@ basicStats(cars_numerical)
 
 Table above give us the basic statistic measures of numeric data. 
 
+
+### Correlation Plot
+```{r}
+corrplot(cor(cars_numerical), method = 'number')
+```
+The year_produced feature has the highest positive correlation with the price
+Lets try to plot it with a graph
+
+```{r}
+library(ggplot2)
+
+df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year') + theme(plot.title = element_text(hjust = 0.5))
+```
+There is a very interesting pattern we can observe. The vintage cars are pricier than the new cars. 
+After around 1985, the price increase steadily.
+
+
+Do we see a trend for the mean price with Engine Capacity
+```{r}
+df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capicity = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=engine_capacity,y=mean_price_per_capicity)) +  geom_point(color = "#00AFBB") + labs(title='Avg Price of Car for engine capicity', x='Engine Capicity', y='Mean Price') + theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+Above you can see the scatterplot relationship graph between mean price and engine capacity. The graph clearly displays a positive correlation between the two variables. The correlation comes down to approximately '0.6'. Please note that this is mean price, not price. Price-Engine capacity correlation that we found was 0.30. This could be explained by the outliers that are found in higher engine capacity. 
+
+
+```{r}
+df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
+cor(df4)
+#corrplot(cor(cars_numerical), method = 'number')
+```
+
+
 ## Mean Difference Between Variables
 ### Warranty vs Price
 ```{r}
@@ -214,10 +247,6 @@ df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=
 Because the p < 0.01, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
 
 
-### Correlation Plot
-```{r}
-corrplot(cor(cars_numerical), method = 'number')
-```
 
 ## Normality tests
 
