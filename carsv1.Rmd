@@ -70,9 +70,9 @@ library(tidyverse)
 df %>% select_if(is.numeric)->cars_numerical
 ```
 
-The dataset is collected from various web resources in order to explore the used cars market and try to build a model that effectively predicts the price of the car based on its parameters (both numerical and categorical)
+The dataset is collected from various web resources in order to explore the used cars market and try to build a model that effectively predicts the price of the car based on its parameters (both numerical and categorical).
 
-The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features
+The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features.
 
 
 # Exploratory Data Analysis
@@ -82,10 +82,10 @@ library(fBasics)
 basicStats(cars_numerical)
 ```
 
-Table above give us the basic statistic measures of numeric data. 
+The table above gives us the basic statistic measures of numeric data. There are six numerical variables in our dataset. The one we care about most is the used car's price. It has mean=6640, standard deviation(sd)=6430. The odometer_value with mean=249000, sd=136000. The year_produced with mean=2000 and sd=8.06. The engine_capacity has mean=2.06 and sd=0.67. The absolute values of skewness for all the variables are all greater than 1, which indicates they are highly skewed. The kurtosis values are all greater than 0, indicating they are sharply peaked with heavy tails. More analysis between other variables shows below.
 
 
-### Correlation Plot
+## Correlation Plot
 ```{r}
 corrplot(cor(cars_numerical), method = 'number')
 ```
@@ -127,8 +127,8 @@ The graph indicates a substantial difference of mean between the two subsets
 Let's run a t-test to check the statistical significance 
 ```{r T test, echo=TRUE}
 summary(df$has_warranty)
-has = subset(df, has_warranty == 1)
-hasnot = subset(df, has_warranty == 0)
+has = subset(df, has_warranty == "True")
+hasnot = subset(df, has_warranty == "False")
 t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 ```
 The t-test on the has_warranty feature suggest strong statistical significance and thus we can reject null hypothesis, suggesting that there is a difference between the true means of the two subsets.
@@ -148,6 +148,10 @@ t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 
 The t-test suggest there is a difference between the true means of the two subsets(Diesel,Gas).
 
+
+```{r}
+df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
+```
 
 
 ## Independence and Homogeneity
@@ -169,10 +173,15 @@ contgcTbl4 = table(df$color, df$transmission)
 
 (Xsq4 = chisq.test(contgcTbl4))
 
-```
-For table one, two, three, because many of the expected values are so small, the approximation of p may not be right.
+contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable)
 
-For table four, because p value < 0.01, we reject that null that colors and transmission are independent.
+(Xsq5 = chisq.test(contgcTbl5))
+
+
+```
+For test of independence homogeneity, we tested manufacturer names against whether has warranty, the body type of cars, car colors and whether the car is exchangable, which are for table 1, 2 , 3 and 5. We also tested car colors against transmissions, which is table 4.
+
+For table 1, 2 and 3, because many of the expected values are so small, the approximation of p may not be right.
 
 
 ## Influential Feactures of Prices
@@ -192,8 +201,10 @@ df2 = df %>% group_by(manufacturer_name) %>% summarise(manuf_price_mean = mean(p
 df2 %>% slice(1:10) %>%  ggplot(aes(x = reorder(manufacturer_name, -manuf_price_mean),manuf_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Manufacturer', y='Mean of price')  + ggtitle('Manufacturer vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-From the initial analysis, for the above 3 plots there seems to be difference among the true means of thier respective groups. Lets run an anova test on each of the case to check the hypothesis
+From the initial analysis, for the above 3 plots there seems to be difference among the true means of their respective groups. Lets run an anova test on each of the case to check the hypothesis
 
+
+### One Way ANOVA
 ```{r}
 df_aov_1 = aov(price ~  color , df)
 summary(df_aov_1)
@@ -209,17 +220,12 @@ summary(df_aov_2)
 For all the three cases there seems to be statistically significant difference the the true means
 The high statistical significance suggest that there is a difference between the true mean of the prices for differently colored vehicles, for different manufacturer and for different body types
 
-### interaction of manufacturer and body type vs price
-
-```{r echo=TRUE}
-df_aov_3 = aov(price ~   manufacturer_name * body_type , df)
-summary(df_aov_3)
+```{r}
+df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-## Interactions
-### ANOVA test
 
-Let's try to see if there is any interaction between the manufacturer_name and the body_type with price
+### Two Way ANOVA
 ```{r}
 df_aov = aov(price ~  manufacturer_name * body_type , df)
 summary(df_aov)
@@ -232,14 +238,11 @@ summary(df_aov)
 
 The high statistical significance show that the interaction term can explain the variation in the price variable.
 
-```{r}
-df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
-```
 
 
 ```{r}
-#(df_aov = aov(price ~ manufacturer_name * color, df))
-#summary(df_aov)
+df_aov = aov(price ~ manufacturer_name * color, df)
+summary(df_aov)
 
 #TukeyHSD(df_aov)
 
