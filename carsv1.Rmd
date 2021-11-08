@@ -84,6 +84,55 @@ basicStats(cars_numerical)
 
 The table above gives us the basic statistic measures of numeric data. There are six numerical variables in our dataset. The one we care about most is the used car's price. It has mean=6640, standard deviation(sd)=6430. The odometer_value with mean=249000, sd=136000. The year_produced with mean=2000 and sd=8.06. The engine_capacity has mean=2.06 and sd=0.67. The absolute values of skewness for all the variables are all greater than 1, which indicates they are highly skewed. The kurtosis values are all greater than 0, indicating they are sharply peaked with heavy tails. More analysis between other variables shows below.
 
+## Normality tests
+
+This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000 in __R__,and our dataset is more extensive than this value, so we will use the *Kolmogorov-Smirnov (K-S) normality test* instead.
+
+```{r, fig.height=3}
+library(gridExtra)
+plot1 = ggplot(cars_numerical, aes(sample = price)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of price') 
+plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of price')
+
+grid.arrange(plot1, plot2, ncol=2, nrow=1)
+```
+
+As we can find in the quantile-quantile plot and the histogram,`price` is not normally distributed, if we want use price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
+
+```{r}
+plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
+plot4 = ggplot(cars_numerical, aes(x = odometer_value)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of odometer_value')
+
+plot5 = ggplot(cars_numerical, aes(sample = year_produced)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of year_produced')
+plot6 = ggplot(cars_numerical, aes(x = year_produced)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of year_produced')
+
+grid.arrange(plot3, plot4, plot5, plot6, ncol=2, nrow=2)
+```
+
+```{r}
+plot7 = ggplot(cars_numerical, aes(sample = engine_capacity)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of engine_capacity')
+plot8 = ggplot(cars_numerical, aes(x = engine_capacity)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of engine_capacity')
+
+plot9 = ggplot(cars_numerical, aes(sample = number_of_photos)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of number_of_photos')
+plot10 = ggplot(cars_numerical, aes(x = number_of_photos)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of number_of_photos')
+
+grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
+```
+
+The Q-Q plots and histograms also show evidence of non-normality. The `odometer_value`, `engine_capacity` and `number_of_photos` are right-skewed, while `year_produced` is left-skewed.
+
+Now we apply the *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
+
+```{r, warning=FALSE}
+ks.test(df$price, 'pnorm', mean=mean(df$price), sd=sd(df$price))
+ks.test(df$odometer_value, 'pnorm', mean=mean(df$odometer_value), sd=sd(df$odometer_value))
+ks.test(df$year_produced, 'pnorm', mean=mean(df$year_produced), sd=sd(df$year_produced))
+ks.test(df$engine_capacity, 'pnorm', mean=mean(df$engine_capacity), sd=sd(df$engine_capacity))
+ks.test(df$number_of_photos, 'pnorm', mean=mean(df$number_of_photos), sd=sd(df$number_of_photos))
+```
+
+The p-value of all the numeric variables are < 2e-16 which is less than 0.05, therefore we conclude that the distributions of all our numeric variables are significantly different from normal distribution. They have the same results with Q-Q plots and histograms.
+
+Our sample size for this data is 38521. Based on the central limit theorem, we generate the rest analysis using the original data.
 
 ## Correlation Plot
 ```{r}
@@ -100,7 +149,6 @@ df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, n
 ```
 There is a very interesting pattern we can observe. The vintage cars are pricier than the new cars. 
 After around 1985, the price increase steadily.
-
 
 
 ```{r}
@@ -255,55 +303,6 @@ Because the p < 0.01, we reject that all colors sell the same price, all manufac
 
 
 
-## Normality tests
-
-This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000 in __R__,and our dataset is more extensive than this value, so we will use the *Kolmogorov-Smirnov (K-S) normality test* instead.
-
-```{r, fig.height=3}
-library(gridExtra)
-plot1 = ggplot(cars_numerical, aes(sample = price)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of price') 
-plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of price')
-
-grid.arrange(plot1, plot2, ncol=2, nrow=1)
-```
-
-As we can find in the quantile-quantile plot and the histogram,`price` is not normally distributed, if we want use price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
-
-```{r}
-plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
-plot4 = ggplot(cars_numerical, aes(x = odometer_value)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of odometer_value')
-
-plot5 = ggplot(cars_numerical, aes(sample = year_produced)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of year_produced')
-plot6 = ggplot(cars_numerical, aes(x = year_produced)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of year_produced')
-
-grid.arrange(plot3, plot4, plot5, plot6, ncol=2, nrow=2)
-```
-
-```{r}
-plot7 = ggplot(cars_numerical, aes(sample = engine_capacity)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of engine_capacity')
-plot8 = ggplot(cars_numerical, aes(x = engine_capacity)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of engine_capacity')
-
-plot9 = ggplot(cars_numerical, aes(sample = number_of_photos)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of number_of_photos')
-plot10 = ggplot(cars_numerical, aes(x = number_of_photos)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of number_of_photos')
-
-grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
-```
-
-The Q-Q plots and histograms also show evidence of non-normality. The `odometer_value`, `engine_capacity` and `number_of_photos` are right-skewed, while `year_produced` is left-skewed.
-
-Now we apply the *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
-
-```{r, warning=FALSE}
-ks.test(df$price, 'pnorm', mean=mean(df$price), sd=sd(df$price))
-ks.test(df$odometer_value, 'pnorm', mean=mean(df$odometer_value), sd=sd(df$odometer_value))
-ks.test(df$year_produced, 'pnorm', mean=mean(df$year_produced), sd=sd(df$year_produced))
-ks.test(df$engine_capacity, 'pnorm', mean=mean(df$engine_capacity), sd=sd(df$engine_capacity))
-ks.test(df$number_of_photos, 'pnorm', mean=mean(df$number_of_photos), sd=sd(df$number_of_photos))
-```
-
-The p-value of all the numeric variables are < 2e-16 which is less than 0.05, therefore we conclude that the distributions of all our numeric variables are significantly different from normal distribution. They have the same results with Q-Q plots and histograms.
-
-
 ```{r pressure, echo=FALSE}
 #boxplot(df['manufacturer_name'], df['price'])
 #car_lm = lm(price ~ ., data = df2)
@@ -317,6 +316,26 @@ The p-value of all the numeric variables are < 2e-16 which is less than 0.05, th
 #loadPkg("corrplot")
 #corrplot(df2)
 ```
+
+
+# Conclusion and Discussions
+Overall, our work involved removing the null values for data preprocessing, data exploratory, normality check, finding the correlation between continuous variables, and finding the mean price difference between multiple categorical variables. The technologies we used included a table summary, normality tests, t-test, ANOVA, and Chi-square test. We used a variety of plots such as bar plot, scatter plot, box plot, Q-Q plot, and histogram to support different tests.
+
+For more details, we deleted ten null values in the data preprocessing part. Then we generated a table to show the basic statistical measurements of numeric data. The price of this data offers mean=6640 and standard deviation=6430. The other two measurements we may consider are skewness and kurtosis. These two statistical values indicated that the data were highly skewed.
+
+Based on these results, we checked the normality of continuous data by using Q-Q plot, histogram, and Kolmogorov-Smirnov normality test. The normality tests showed significant evidence to reject the null hypothesis. Thus, the price was not a normal distribution. The other continuous variables showed the same results. Therefore, for our future work, if we need to use price as the dependent variable to create a regression, we will transform the data to a normal distribution.
+
+We used a correlation plot for checking the correlation between continuous variables. Year of production was highly correlated with price with correlation coefficient(cc)=0.7. Odometer value had a negative correlation with year produced (cc=-0.49) and price (cc=-0.42). Engine capacity also had a positive correlation with price (cc=0.30).
+
+We then generated other exploratory data analysis for the feature that we were more concerned about – price. 
+
+The bar plot of the average price of the car in different years showed that the vintage cars produced around the year 1965 are pricier than the newer cars. And the price increased steadily after around 1985. The box plots and t-tests suggested the solid statistical significance of the difference between the mean price of vehicles with a warranty and without warranty and diesel and gasoline engine types. In our analysis, one-way and two-way ANOVA were used to check the difference between more than three levels of categorical data and price. The results suggested that color, manufacturer name, and body type had mean price differences.
+
+## need to combined with SMART questions
+According to the above analysis, the features that influence the prices of cars in the used car market in Belarus are year of production, body type, manufacture name, engine capacity, odometer value, engine type color, and transmission. The result perfectly answered our question in the beginning.
+
+Our future work for this topic is building up a model to predict the price based on the analysis we explored to provide more effective decision-making services for future vehicle buyers and sellers.
+
 
 
 # 2nd Phase( Skipped for now)
