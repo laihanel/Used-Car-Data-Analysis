@@ -27,7 +27,7 @@ options(scientific=T, digits = 3)
 # use scipen=999 to prevent scientific notation at all times
 ```
 
-# Data Import and Cleaning
+## Data Import and Cleaning
 ```{r cars, include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
@@ -37,6 +37,8 @@ df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "col
 names(df)[names(df) == 'price_usd'] <- 'price'
 
 ```
+
+
 
 
 ## Renaming features
@@ -70,12 +72,40 @@ library(tidyverse)
 df %>% select_if(is.numeric)->cars_numerical
 ```
 
-The dataset is collected from various web resources in order to explore the used cars market and try to build a model that effectively predicts the price of the car based on its parameters (both numerical and categorical).
 
-The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features.
+•	The Dataset used for the project is “Belarus-Used-cars-catalog” taken from the public data source Kaggle (An online community of data scientists and machine learning practitioners).
+
+  Link: https://www.kaggle.com/lepchenkov/usedcarscatalog?select=cars.csv
+
+•	The Dataset contains information about the Belarus (western Europe) used cars market from the year 2019.
+
+•	The total number of variables in the data set is 19.
+
+•	The total number of observations in the data set is 38521.
+
+•	This Dataset helps the team in exploring the used car market in Belarus and build a model to find the relationship between car prices with changing features that can effectively predict the price of a used car, given the certain parameters (both numerical and categorical).
+
+•	From the Dataset we mainly focus on these features as mentioned below to perform Exploratory Data Analysis:
+
+  •	Color
+  •	Transmission
+  •	Odometer value
+  •	Year of Production
+  •	Body type
+  •	Number of Photos
+  •	Duration of days
 
 
-# Exploratory Data Analysis
+### Limitations of Dataset:
+1.	The “Belarus-Used-cars-catalog” dataset is limited to only Belarus which in effect does not help Pattern 6 to make assumptions about used car markets in other countries.
+
+2.	There is no ‘electric’ car category as the dataset is limited to gasoline and diesel.
+
+3.	There could have been more features found in the dataset which Team Pattern 6 could have used for the Exploratory Data Analysis and get a more detailed analysis when comparing multiple features.
+
+
+
+## Exploratory Data Analysis
 ```{r echo=TRUE}
 # summary(cars_numerical)
 library(fBasics)
