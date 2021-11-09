@@ -116,7 +116,7 @@ The table above gives us the basic statistic measures of numeric data. There are
 
 ## Normality tests
 
-This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000 in __R__,and our dataset is more extensive than this value, so we will use the *Kolmogorov-Smirnov (K-S) normality test* instead.
+This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and our data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
 
 ```{r, fig.height=3}
 library(gridExtra)
@@ -126,7 +126,7 @@ plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB"
 grid.arrange(plot1, plot2, ncol=2, nrow=1)
 ```
 
-As we can find in the quantile-quantile plot and the histogram,`price` is not normally distributed, if we want use price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
+As it could be found in the quantile-quantile plot and the histogram,`price` are not normally distributed, if PatternSix wants to use the price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
 
 ```{r}
 plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
@@ -150,7 +150,7 @@ grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
 
 The Q-Q plots and histograms also show evidence of non-normality. The `odometer_value`, `engine_capacity` and `number_of_photos` are right-skewed, while `year_produced` is left-skewed.
 
-Now we apply the *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
+Now let's apply *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
 
 ```{r, warning=FALSE}
 ks.test(df$price, 'pnorm', mean=mean(df$price), sd=sd(df$price))
@@ -160,9 +160,9 @@ ks.test(df$engine_capacity, 'pnorm', mean=mean(df$engine_capacity), sd=sd(df$eng
 ks.test(df$number_of_photos, 'pnorm', mean=mean(df$number_of_photos), sd=sd(df$number_of_photos))
 ```
 
-The p-value of all the numeric variables are < 2e-16 which is less than 0.05, therefore we conclude that the distributions of all our numeric variables are significantly different from normal distribution. They have the same results with Q-Q plots and histograms.
+The p-value of all the numeric variables are < 2e-16 which is less than 0.05, therefore it could be concluded that the distributions of all our numeric variables are significantly different from normal distribution. They have the same results with Q-Q plots and histograms.
 
-Our sample size for this data is 38521. Based on the central limit theorem, we generate the rest analysis using the original data.
+Our sample size for this data is 38521. Based on the central limit theorem, the rest analysis will be generated using the original data.
 
 
 
@@ -235,27 +235,43 @@ df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=
 
 Figure 4 shows the mean engine capacity for different body type using a box-plot. From the initial analysis the team observed for each of the groups there is a difference in median.
 
-## Mean Difference Between Variables
+
+## T test
+
+When there are two samples drawn from the same population and the goal is to test whether the mean of respective two samples are the same, it is wise to perform the student-t test, or t-test in short. The reason team PatternSix did not choose the Z-test is that the team did not know the population standard deviation. Thus using t-test, team used sample standard deviation (s) to estimate the population parameter (σ).
+
+
 ### Warranty vs Price
+PatternSix tested some of the features against prices respectively since price is going to be the dependent variable. First one the team looked at is whether cars had warranties versus different average prices. A box-plot would help show the relationship between these two.
+
+
 ```{r}
 df %>% ggplot(aes(has_warranty, price, fill=has_warranty)) + geom_boxplot() + ggtitle('Has_Warranty vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
+From the graph, one could see that the average prices differ significantly between warrantied and non-warrantied cars.
 
-The graph indicates a substantial difference of mean between the two subsets
-Let's run a t-test to check the statistical significance 
+The t-test was performed to verify the assumptions.
+
 ```{r T test, echo=TRUE}
 summary(df$has_warranty)
 has = subset(df, has_warranty == "True")
 hasnot = subset(df, has_warranty == "False")
 t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 ```
-The t-test on the has_warranty feature suggest strong statistical significance and thus we can reject null hypothesis, suggesting that there is a difference between the true means of the two subsets.
+
+PatternSix subset the prices for cars based on whether they have warranties. The null hypothesis H0 is that μ1 = μ2. The alternative hypothesis H1 is μ1 <> μ2. From the result, because p-value is extremely low, team rejects the null hypothesis and concludes that whether cars have warranties does affect average price of cars.
 
 
 ###  Engine Types vs Price
+
+Next, lets take a look at whether different engine types have different average prices. same as above, PatternSix drew a box-plot to get a visual idea.
+
 ```{r}
 df %>% ggplot(aes(engine_type, price,fill=engine_type)) + geom_boxplot()+ ggtitle('Engine_type vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
+
+This time, from the graph, PatternSix could not get a conclusion right away. That is why it is crucial to perform the formal test.
+
 
 ```{r echo=TRUE}
 summary(df$engine_type)
@@ -264,11 +280,18 @@ gas = subset(df, subset = df$engine_type == "gasoline")
 t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 ```
 
-The t-test suggest there is a difference between the true means of the two subsets(Diesel,Gas).
+PatternSix subset prices for cars based on different engine types. The null hypothesis H0 is μ1 = μ2. The null hypothesis is μ1 <> μ2.
+
+Surprisingly, the p-value is extremely low, which tells the team to reject the null hypothesis and  conclude for different engine types, their average prices do differ.
 
 
 
-## Independence and Homogeneity
+## $Chi^2$ test
+
+In the data set, not only do there are numerical variables,but there are also categorical variables.
+For categorical variables, data set does not fit the requirements for goodness of fit test but the data has to be tested for colinearity between categorical variables for variable selection in model building. Test of Independence thus is performed. 
+
+
 ```{r}
 contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
 
@@ -283,22 +306,31 @@ contgcTbl3 = table(df$manufacturer_name, df$color)
 
 (Xsq3 = chisq.test(contgcTbl3))
 
-(contgcTbl4 = table(df$color, df$transmission))
+contgcTbl4 = table(df$color, df$transmission)
 
 (Xsq4 = chisq.test(contgcTbl4))
+summary(Xsq4)
 
-(contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable))
-
+contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable)
 (Xsq5 = chisq.test(contgcTbl5))
 
 
 ```
-For test of independence homogeneity, we tested manufacturer names against whether has warranty, the body type of cars, car colors and whether the car is exchangable, which are for table 1, 2 , 3 and 5. We also tested car colors against transmissions, which is table 4.
 
-For table 1, 2 and 3, because many of the expected values are so small, the approximation of p may not be right.
+The pairs that were chosen here are different manufacturers versus whether cars have warranties, different body types, different colors and whether cars are exchangable, respectively. In addition, the test between different colors and whether the car is automatic or manual is also conducted. To make presenting results easier, these tests are assigned as 1, 2, 3, 4, 5 respectively. One thing to note here is that for the last test, to put which variable in row position or column position does not matter as a result of non casualty between them.
 
 
-## Influential Feactures of Prices
+PatternSix's null hypotheses are that all pairs are independent. Interestingly, wide range of results can be observed. For test 1, 2, 3, a warning that the chi-square test approximation might be incorrect pops up. The reason for that is to use the test of independence, sample size has to be large enough. General rule is that if expected frequencies for 20% of the categories are less than 5,it can't be used to test independence. That is exactly what happened here. As a result, these test results can't be used.
+
+For test 4, between different manufacturers and whether cars are exchangable, and for test 5, between different colors and whether the car is automatic or manual, the results are acceptable. Due to low p-values in both tests, the null hypothesis has been rejected, which means for test 4 and 5 testing pairs, they are not independent.
+
+
+## ANOVA 
+
+Due to the fact that there are numerous independent variables to test on, in order to improve efficiency, ANOVA was performed.
+
+Same as above, a graph would give the observer an overview of relationships against prices.
+
 ### Colors by Mean Price
 ```{r}
 df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB") + labs(x='Color',y='Price mean') + ggtitle('Color vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
@@ -315,7 +347,9 @@ df2 = df %>% group_by(manufacturer_name) %>% summarise(manuf_price_mean = mean(p
 df2 %>% slice(1:10) %>%  ggplot(aes(x = reorder(manufacturer_name, -manuf_price_mean),manuf_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Manufacturer', y='Mean of price')  + ggtitle('Manufacturer vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-From the initial analysis, for the above 3 plots there seems to be difference among the true means of their respective groups. Lets run an anova test on each of the case to check the hypothesis
+Here there are three graphs, average prices for different colors, for different body types and for top ten manufacturers. The last one is showing limited data by reason of display limitations.
+
+It could be seen that average price differences are all significant between groups in colors, body types and top ten manufacturers. Same as the t-test,a formal test should be performed to get correct conclusions.
 
 
 ### One Way ANOVA
@@ -331,51 +365,12 @@ summary(df_aov_2)
 
 ```
 
-For all the three cases there seems to be statistically significant difference the the true means
-The high statistical significance suggest that there is a difference between the true mean of the prices for differently colored vehicles, for different manufacturer and for different body types
+Pairs that were chosen here are prices versus different colors, different manufacturers and different body types, respectively. PatternSix's null hypotheses are that for all pairs, they are independent, same as the $Chi^2$ test. Because there are multiple categories for categorical variables for this test, the alternative hypotheses are that all these categories are not all same. 
+
+For all three cases, in accordance with the extreme low p-values, the null hypotheses is rejected, which means all categories are not all the same within a test.
 
 
-
-### Two Way ANOVA
-```{r}
-df_aov = aov(price ~  manufacturer_name * body_type , df)
-summary(df_aov)
-
-#Check for homoscedasticity 
-#par(mfrow=c(2,2))
-#plot(df_aov)
-#par(mfrow=c(1,1))
-```
-
-The high statistical significance show that the interaction term can explain the variation in the price variable.
-
-
-
-```{r}
-df_aov = aov(price ~ manufacturer_name * color, df)
-summary(df_aov)
-
-#TukeyHSD(df_aov)
-
-```
-Because the p < 0.01, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
-
-
-
-```{r pressure, echo=FALSE}
-#boxplot(df['manufacturer_name'], df['price'])
-#car_lm = lm(price ~ ., data = df2)
-
-
-#library(s20x)
-#pairs20x(df2)
-```
-```{r}
-#library(ezids)
-#loadPkg("corrplot")
-#corrplot(df2)
-```
-
+The Turkey test has been performed in this data set. However, due to excessive levels in categorical variables, it is impractical to incorporate it into the report.
 
 ## Conclusion and Discussions
 Overall, our work involved removing the null values for data preprocessing, data exploratory, normality check, finding the correlation between continuous variables, and finding the mean price difference between multiple categorical variables. The technologies we used included a table summary, normality tests, t-test, ANOVA, and Chi-square test. We used a variety of plots such as bar plot, scatter plot, box plot, Q-Q plot, and histogram to support different tests.
