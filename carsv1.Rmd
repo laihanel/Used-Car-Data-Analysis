@@ -134,26 +134,54 @@ The p-value of all the numeric variables are < 2e-16 which is less than 0.05, th
 
 Our sample size for this data is 38521. Based on the central limit theorem, we generate the rest analysis using the original data.
 
+
+
+## SMART Qeustions
+The following are our SMART questions
+
+**Specific**: Is it possible to build a model to find a relationship between car prices by looking at different factors that include numerical, categorical values and further use the model to predict car prices?
+
+**Measurable**: Is it possible to measure metrics such as r-square, MAE, MSE and RMSE with your categories?
+
+**Achievable**: Based on the preliminary analysis that the team concluded is it possible to find a pattern between target variable(car price) and the independent variable?
+
+**Relevant**: Can the research help the sellers and buyers in the used car market to make an informed decision about the price of the vehicle?
+
+**Time Oriented**: Will The initial analysis be completed by November, 2nd with the presentation?
+
+
+
+
+
+
 ## Correlation Plot
-```{r}
+
+```{r Fig 1}
 corrplot(cor(cars_numerical), method = 'number')
 ```
+Figure 1 shows the correlation between the numerical features.
 
-The year_produced feature has the highest positive correlation with the price
-Lets try to plot it with a graph
+The team used a correlation plot for checking the correlation between continuous variables. Year of production was highly correlated with price with correlation coefficient(cc)=0.7. Odometer value had a negative correlation with year produced (cc=-0.49) and price (cc=-0.42). Engine capacity also had a positive correlation with price (cc=0.30). 
 
-```{r}
+
+```{r Fig. 2}
 library(ggplot2)
 
 df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year', x="year produced", y = "mean price per year") + theme(plot.title = element_text(hjust = 0.5))
 ```
-There is a very interesting pattern we can observe. The vintage cars are pricier than the new cars. 
-After around 1985, the price increase steadily.
+
+Figure 2 shows the average price of the car for each year produced between 1940 and 2020. The team observed that there is a steady decrease in the price as the car gets older. However around 1990, it could be observed that the prices spike as cars before 1990 fall under the classic or vintage category.
+
+The bar plot of the average price of the car in different years showed that the vintage cars produced around the year 1965 are pricier than the newer cars. And the price increased steadily after around 1985.
 
 
-```{r}
+```{r Fig. 3}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capicity = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=engine_capacity,y=mean_price_per_capicity)) +  geom_point(color = "#00AFBB") + labs(title='Avg Price of Car for engine capacity', x='Engine Capacity', y='Mean Price') + theme(plot.title = element_text(hjust = 0.5))
 ```
+Figure 3 shows the average price of the car for each engine capacity. 
+The team observed a positive linear trend between the mean price per engine capacity and the capacity 
+
+
 
 ```{r}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
@@ -161,12 +189,11 @@ cor(df4)
 #corrplot(cor(cars_numerical), method = 'number')
 ```
 
-Do we see a trend for the mean price with Engine Capacity
-
-Above you can see the scatterplot relationship graph between mean price and engine capacity. The graph clearly displays a positive correlation between the two variables. The correlation comes down to approximately '0.6'. Please note that this is mean price, not price. Price-Engine capacity correlation that we found was 0.30. This could be explained by the outliers that are found in higher engine capacity. 
+The observed correlation coefficient equals 0.6. However, in Figure 1 it was observed that the correlation coefficient between price and engine capacity was 0.3. This trend could be explained by the outliers which are found in higher engine capacity.
 
 
-```{r}
+
+```{r Fig 4}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
 cor(df4)
 #corrplot(cor(cars_numerical), method = 'number')
@@ -175,6 +202,8 @@ cor(df4)
 ```{r}
 df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
 ```
+
+Figure 4 shows the mean engine capacity for different body type using a box-plot. From the initial analysis the team observed for each of the groups there is a difference in median.
 
 ## Mean Difference Between Variables
 ### Warranty vs Price
@@ -318,7 +347,7 @@ Because the p < 0.01, we reject that all colors sell the same price, all manufac
 ```
 
 
-# Conclusion and Discussions
+## Conclusion and Discussions
 Overall, our work involved removing the null values for data preprocessing, data exploratory, normality check, finding the correlation between continuous variables, and finding the mean price difference between multiple categorical variables. The technologies we used included a table summary, normality tests, t-test, ANOVA, and Chi-square test. We used a variety of plots such as bar plot, scatter plot, box plot, Q-Q plot, and histogram to support different tests.
 
 For more details, we deleted ten null values in the data preprocessing part. Then we generated a table to show the basic statistical measurements of numeric data. The price of this data offers mean=6640 and standard deviation=6430. The other two measurements we may consider are skewness and kurtosis. These two statistical values indicated that the data were highly skewed.
@@ -331,64 +360,11 @@ We then generated other exploratory data analysis for the feature that we were m
 
 The bar plot of the average price of the car in different years showed that the vintage cars produced around the year 1965 are pricier than the newer cars. And the price increased steadily after around 1985. The box plots and t-tests suggested the solid statistical significance of the difference between the mean price of vehicles with a warranty and without warranty and diesel and gasoline engine types. In our analysis, one-way and two-way ANOVA were used to check the difference between more than three levels of categorical data and price. The results suggested that color, manufacturer name, and body type had mean price differences.
 
-## need to combined with SMART questions
-According to the above analysis, the features that influence the prices of cars in the used car market in Belarus are year of production, body type, manufacture name, engine capacity, odometer value, engine type color, and transmission. The result perfectly answered our question in the beginning.
+
+According to the above analysis, the features that influence the prices of cars in the used car market in Belarus are year of production, body type, manufacture name, engine capacity, odometer value, engine type color, and transmission. 
+
+After conducting the EDA and hypothesis tests on the data, the team has concluded that the initial SMART research question were successful answered.
 
 Our future work for this topic is building up a model to predict the price based on the analysis we explored to provide more effective decision-making services for future vehicle buyers and sellers.
 
-
-
-# 2nd Phase( Skipped for now)
-```{r}
-#loadPkg("leaps")
-#reg.best10 <- leaps::regsubsets(price_usd~. , data = df, nvmax = 10, nbest = 1, method = "exhaustive")  
-
-# leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
-#The plot will show the Adjust R^2 when using the variables across the bottom
-#plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
-#plot(reg.best10, scale = "r2", main = "R^2")
-# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
-#plot(reg.best10, scale = "bic", main = "BIC")
-#plot(reg.best10, scale = "Cp", main = "Cp")
-#summary(reg.best10)
-```
-
-##Target valrible distribution
-```{r}
-library(ggplot2)
-p <-  ggplot(df, aes(price)) 
-#p + geom_boxplot()
-p + geom_density()
-#df %>%  ggplot( aes(x=manufacturer_name, y=price_usd)) +   geom_boxplot(outlier.colour="red", #outlier.shape=8,outlier.size=4)
-#p + geom_point(x='price_usd',y='manufacturer_name')
-```
-
-
-
-
-We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
-Let try the box-Cox transformation to normalize the target variable
-
-```{r}
-library(MASS)
-y = df$price
-df %>% ggplot(aes(price)) + geom_density()
-
-result = boxcox(y~1)
-#Getting the optimal lambda value
-mylambda = result$x[which.max(result$y)]
-mylambda
-#Transforming the price to new feature using the lambda value
-# To get the original price, perform inverse operation to the one below
-price_normal = (y^mylambda-1)/mylambda
-data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
-
-df <- cbind(df,price_normal)
-```
-
-```{r}
-library(ggplot2)
-
-df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year') + theme(plot.title = element_text(hjust = 0.5))
-```
 
