@@ -1,7 +1,7 @@
 ---
-title: "Analysis of the used cars dataset"
-author: ""
-date: "today"
+title: "Analysis of Belarus Used Car Market"
+author: "Team PatternSix"
+date: "11/9/2021"
 # date: "`r Sys.Date()`"
 output:
   html_document:
@@ -28,23 +28,20 @@ options(scientific=T, digits = 3)
 ```
 
 ## Why Used Car Market in Belarus?
-As it is widely known, for the last  year and a half the world has been dealing with an unprecedented event; the corona virus pandemic. While this affected many areas of people’s lives, one thing that many did not talk about was its effects on the global supply chain. People stocked up early on during the pandemic, fearing a potential scarcity in finding some of the most commonly found consumer items.  For example, hygienic wipes was one of the most popular scarce items for many months,  most large market chains, CVS-target-Safeway, limited people from buying more than one swipe at once. 
+As it is widely known, for the last  year and a half the world has been dealing with an unprecedented event; the corona virus pandemic. While this affected many areas of people’s lives, one thing that many did not talk about was its effects on the global supply chain. People stocked up early on during the pandemic, fearing a potential scarcity in finding some of the most commonly available consumer items.  For example, hygienic wipes was one of the most popular scarce items for many months,  most large market chains, CVS-target-Safeway, limited people from buying more than one swipe at once. 
 	
 While the world is recovering from this once in a hundred years phenomena, car market was also hit by the sudden changes. In many countries around the world, it is very hard to find first hand cars (Isidore, 2021)  and because of that reason more and more people are looking to the used car market. For this reason Team PatternSix found it fit to take a deep dive in to the used car market and help potential buyers/sellers to get the best prices for the specific features that they are looking for. 
 	
-As prospective data scientists, Team PatternSix wanted to take a recent issue at hand just like a true data scientist does and explain the findings using the best up to date data analysis and data visualization techniques. Pattern 6 found the Belarus Car Market data particularly interesting due to the fact that not only the data set had the necessary amount of multi-level variables but also because of the fact that team saw that there was a story to tell to the common consumer.  
+As prospective data scientists, Team PatternSix wanted to take a recent issue at hand just like a true data scientist does and explain the findings using the best up to date data analysis and data visualization techniques. PatternSix found the Belarus Car Market data particularly interesting due to the fact that not only the data set had the necessary amount of multi-level variables but also because of the fact that the team saw that there was a story to tell to the common consumer.  
 
 
 ## Prior Research
 
 Research and analysis have been rampant in the field of used car prices. For example, a simple search on Google Scholar shows over a million articles written. Some studies are back from 1960s. Articles could be found from all over the World, from countries like Turkey to Australia. 
 
-One of the interesting researches that inspired team Pattern 6 was the impact of digital disruption (Ben Ellencweig, Sam Ezratty, Dan Fleming, and Itai Miller, 2019) . The most interesting takeaway from this research was the fact that used car market was not sensible to macro-economic shocks as much as new cars. The exhibit that is displayed in the analysis suggest that used car sales were affected less by crisis such as dot-com bubble or rising interest rates in the beginning of 1990s . 
+One of the interesting researches that inspired team PatternSix was the impact of digital disruption (Ben Ellencweig, Sam Ezratty, Dan Fleming, and Itai Miller, 2019) . The most interesting takeaway from this research was the fact that used car market was not sensible to macro-economic shocks as much as new cars. Given that the World is going through a once in a decade catastrophe, this was an interesting point. The exhibit that is displayed in the analysis suggest that used car sales were affected less by crisis such as dot-com bubble or rising interest rates in the beginning of 1990s . 
 
 Considering that the Belarus used car data set was gathered from the web, this research was an important finding for this team’s research. 
-
-
-
 
 
 
@@ -69,9 +66,11 @@ names(df)[names(df) == 'price_usd'] <- 'price'
 
 
 Checking for the the factors and numerical features   
+
 ```{r include=FALSE}
 str(df)
 ```
+
 Looks perfectly fine
 
 ## Data Preprocessing
@@ -79,7 +78,7 @@ Looks perfectly fine
 colSums(is.na(df))
 ```
 
-Engine Capacity has 10 null values, we dropped the rows with null values.
+Engine Capacity has 10 null values, PattaernSix dropped the rows with null values.
 ```{r include=FALSE}
 #Droping the rows with null values 
 df <- df[complete.cases(df), ]
@@ -94,19 +93,19 @@ df %>% select_if(is.numeric)->cars_numerical
 ```
 
 
-•	The Dataset used for the project is “Belarus-Used-cars-catalog” taken from the public data source Kaggle (An online community of data scientists and machine learning practitioners).
+•	The Data set used for the project is “Belarus-Used-cars-catalog” taken from the public data source Kaggle (An online community of data scientists and machine learning practitioners).
 
   Link: https://www.kaggle.com/lepchenkov/usedcarscatalog?select=cars.csv
 
-•	The Dataset contains information about the Belarus (western Europe) used cars market from the year 2019.
+•	The Data set contains information about the Belarus (western Europe) used cars market from the year 2019.
 
 •	The total number of variables in the data set is 19.
 
 •	The total number of observations in the data set is 38521.
 
-•	This Dataset helps the team in exploring the used car market in Belarus and build a model to find the relationship between car prices with changing features that can effectively predict the price of a used car, given the certain parameters (both numerical and categorical).
+•	This Data set helps the team in exploring the used car market in Belarus and build a model to find the relationship between car prices with changing features that can effectively predict the price of a used car, given the certain parameters (both numerical and categorical).
 
-•	From the Dataset we mainly focus on these features as mentioned below to perform Exploratory Data Analysis:
+•	From the Data set we mainly focus on these features as mentioned below to perform Exploratory Data Analysis:
 
   •	Color
   •	Transmission
@@ -118,11 +117,11 @@ df %>% select_if(is.numeric)->cars_numerical
 
 
 ### Limitations of Dataset:
-1.	The “Belarus-Used-cars-catalog” dataset is limited to only Belarus which in effect does not help Pattern 6 to make assumptions about used car markets in other countries.
+1.	The “Belarus-Used-cars-catalog” data set is limited to only Belarus which in effect does not help Pattern 6 to make assumptions about used car markets in other countries.
 
-2.	There is no ‘electric’ car category as the dataset is limited to gasoline and diesel.
+2.	There is no ‘electric’ car category as the data set is limited to gasoline and diesel.
 
-3.	There could have been more features found in the dataset which Team Pattern 6 could have used for the Exploratory Data Analysis and get a more detailed analysis when comparing multiple features.
+3.	There could have been more features found in the data set which Team Pattern 6 could have used for the Exploratory Data Analysis and get a more detailed analysis when comparing multiple features.
 
 
 
@@ -133,11 +132,11 @@ library(fBasics)
 basicStats(cars_numerical)
 ```
 
-The table above gives us the basic statistic measures of numeric data. There are six numerical variables in our dataset. The one we care about most is the used car's price. It has mean=6640, standard deviation(sd)=6430. The odometer_value with mean=249000, sd=136000. The year_produced with mean=2000 and sd=8.06. The engine_capacity has mean=2.06 and sd=0.67. The absolute values of skewness for all the variables are all greater than 1, which indicates they are highly skewed. The kurtosis values are all greater than 0, indicating they are sharply peaked with heavy tails. More analysis between other variables shows below.
+The table above gives the basic statistic measures of numeric data. There are six numerical variables in the dataset. The one that is most important is the used car's price. It has mean=6640, standard deviation(sd)=6430. The odometer_value with mean=249000, sd=136000. The year_produced with mean=2000 and sd=8.06. The engine_capacity has mean=2.06 and sd=0.67. The absolute values of skewness for all the variables are all greater than 1, which indicates they are highly skewed. The kurtosis values are all greater than 0, indicating they are sharply peaked with heavy tails. More analysis between other variables is shown below.
 
 ## Normality tests
 
-This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and our data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
+This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and Belarus used car market data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
 
 ```{r, fig.height=3}
 library(gridExtra)
@@ -171,7 +170,7 @@ grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
 
 The Q-Q plots and histograms also show evidence of non-normality. The `odometer_value`, `engine_capacity` and `number_of_photos` are right-skewed, while `year_produced` is left-skewed.
 
-Now let's apply *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
+Now let's apply *Kolmogorov-Smirnov normality test* into the data. The null hypothesis of this test is 'sample distribution is normal'.
 
 ```{r, warning=FALSE}
 ks.test(df$price, 'pnorm', mean=mean(df$price), sd=sd(df$price))
@@ -187,12 +186,12 @@ Our sample size for this data is 38521. Based on the central limit theorem, the 
 
 
 
-## SMART Qeustions
-The following are our SMART questions
+## SMART Questions
+The following are the SMART questions which PatternSix came up with and followed.
 
 **Specific**: Is it possible to build a model to find a relationship between car prices by looking at different factors that include numerical, categorical values and further use the model to predict car prices?
 
-**Measurable**: Is it possible to measure metrics such as r-square, MAE, MSE and RMSE with your categories?
+**Measurable**: Is it possible to measure metrics such as r-square, MAE, MSE and RMSE with the data set categories?
 
 **Achievable**: Based on the preliminary analysis that the team concluded is it possible to find a pattern between target variable(car price) and the independent variable?
 
@@ -210,6 +209,7 @@ The following are our SMART questions
 ```{r Fig 1}
 corrplot(cor(cars_numerical), method = 'number')
 ```
+
 Figure 1 shows the correlation between the numerical features.
 
 The team used a correlation plot for checking the correlation between continuous variables. Year of production was highly correlated with price with correlation coefficient(cc)=0.7. Odometer value had a negative correlation with year produced (cc=-0.49) and price (cc=-0.42). Engine capacity also had a positive correlation with price (cc=0.30). 
@@ -229,6 +229,7 @@ The bar plot of the average price of the car in different years showed that the 
 ```{r Fig. 3}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capicity = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=engine_capacity,y=mean_price_per_capicity)) +  geom_point(color = "#00AFBB") + labs(title='Avg Price of Car for engine capacity', x='Engine Capacity', y='Mean Price') + theme(plot.title = element_text(hjust = 0.5))
 ```
+
 Figure 3 shows the average price of the car for each engine capacity. 
 The team observed a positive linear trend between the mean price per engine capacity and the capacity 
 
@@ -263,12 +264,14 @@ When there are two samples drawn from the same population and the goal is to tes
 
 
 ### Warranty vs Price
+
 PatternSix tested some of the features against prices respectively since price is going to be the dependent variable. First one the team looked at is whether cars had warranties versus different average prices. A box-plot would help show the relationship between these two.
 
 
 ```{r}
 df %>% ggplot(aes(has_warranty, price, fill=has_warranty)) + geom_boxplot() + ggtitle('Has_Warranty vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
+
 From the graph, one could see that the average prices differ significantly between warrantied and non-warrantied cars.
 
 The t-test was performed to verify the assumptions.
@@ -303,14 +306,14 @@ t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 
 PatternSix subset prices for cars based on different engine types. The null hypothesis H0 is μ1 = μ2. The null hypothesis is μ1 <> μ2.
 
-Surprisingly, the p-value is extremely low, which tells the team to reject the null hypothesis and  conclude for different engine types, their average prices do differ.
+Surprisingly, the p-value is extremely low, which tells the team to reject the null hypothesis and conclude for different engine types, their average prices do differ.
 
 
 
 ## $Chi^2$ test
 
 In the data set, not only do there are numerical variables,but there are also categorical variables.
-For categorical variables, data set does not fit the requirements for goodness of fit test but the data has to be tested for colinearity between categorical variables for variable selection in model building. Test of Independence thus is performed. 
+For categorical variables, data set does not fit the requirements for goodness of fit test but the data has to be tested for co-linearity between categorical variables for variable selection in model building. Test of Independence thus is performed. 
 
 
 ```{r}
@@ -338,7 +341,7 @@ contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable)
 
 ```
 
-The pairs that were chosen here are different manufacturers versus whether cars have warranties, different body types, different colors and whether cars are exchangable, respectively. In addition, the test between different colors and whether the car is automatic or manual is also conducted. To make presenting results easier, these tests are assigned as 1, 2, 3, 4, 5 respectively. One thing to note here is that for the last test, to put which variable in row position or column position does not matter as a result of non casualty between them.
+The pairs that were chosen here are different manufacturers versus whether cars have warranties, different body types, different colors and whether cars are exchangeable, respectively. In addition, the test between different colors and whether the car is automatic or manual is also conducted. To make presenting results easier, these tests are assigned as 1, 2, 3, 4, 5 respectively. One thing to note here is that for the last test, to put which variable in row position or column position does not matter as a result of non casualty between them.
 
 
 PatternSix's null hypotheses are that all pairs are independent. Interestingly, wide range of results can be observed. For test 1, 2, 3, a warning that the chi-square test approximation might be incorrect pops up. The reason for that is to use the test of independence, sample size has to be large enough. General rule is that if expected frequencies for 20% of the categories are less than 5,it can't be used to test independence. That is exactly what happened here. As a result, these test results can't be used.
@@ -391,26 +394,26 @@ Pairs that were chosen here are prices versus different colors, different manufa
 For all three cases, in accordance with the extreme low p-values, the null hypotheses is rejected, which means all categories are not all the same within a test.
 
 
-The Turkey test has been performed in this data set. However, due to excessive levels in categorical variables, it is impractical to incorporate it into the report.
+The Tukey test has been performed in this data set. However, due to excessive levels in categorical variables, it is impractical to incorporate it into the report.
 
 ## Conclusion and Discussions
-Overall, our work involved removing the null values for data preprocessing, data exploratory, normality check, finding the correlation between continuous variables, and finding the mean price difference between multiple categorical variables. The technologies we used included a table summary, normality tests, t-test, ANOVA, and Chi-square test. We used a variety of plots such as bar plot, scatter plot, box plot, Q-Q plot, and histogram to support different tests.
+Overall, PatternSix's work involved removing the null values for data pre-processing, data exploratory, normality check, finding the correlation between continuous variables, and finding the mean price difference between multiple categorical variables. The technologies used included a table summary, normality tests, t-test, ANOVA, and Chi-square test. The team used a variety of plots such as bar plot, scatter plot, box plot, Q-Q plot, and histogram to support different tests.
 
-For more details, we deleted ten null values in the data preprocessing part. Then we generated a table to show the basic statistical measurements of numeric data. The price of this data offers mean=6640 and standard deviation=6430. The other two measurements we may consider are skewness and kurtosis. These two statistical values indicated that the data were highly skewed.
+For more details, PatternSix deleted ten null values in the data pre-processing part. Then the team generated a table to show the basic statistical measurements of numeric data. The price of this data offers mean=6640 and standard deviation=6430. The other two measurements that may be considered are skewness and kurtosis. These two statistical values indicated that the data were highly skewed.
 
-Based on these results, we checked the normality of continuous data by using Q-Q plot, histogram, and Kolmogorov-Smirnov normality test. The normality tests showed significant evidence to reject the null hypothesis. Thus, the price was not a normal distribution. The other continuous variables showed the same results. Therefore, for our future work, if we need to use price as the dependent variable to create a regression, we will transform the data to a normal distribution.
+Based on these results, PatternSix checked the normality of continuous data by using Q-Q plot, histogram, and Kolmogorov-Smirnov normality test. The normality tests showed significant evidence to reject the null hypothesis. Thus, the price was not a normal distribution. The other continuous variables showed the same results. Therefore, for the future work, if PatternSix needs to use price as the dependent variable to create a regression, the team will transform the data to a normal distribution.
 
-We used a correlation plot for checking the correlation between continuous variables. Year of production was highly correlated with price with correlation coefficient(cc)=0.7. Odometer value had a negative correlation with year produced (cc=-0.49) and price (cc=-0.42). Engine capacity also had a positive correlation with price (cc=0.30).
+The team used a correlation plot for checking the correlation between continuous variables. Year of production was highly correlated with price with correlation coefficient(cc)=0.7. Odometer value had a negative correlation with year produced (cc=-0.49) and price (cc=-0.42). Engine capacity also had a positive correlation with price (cc=0.30).
 
-We then generated other exploratory data analysis for the feature that we were more concerned about – price. 
+After that the team generated other exploratory data analysis for the feature that the team was more concerned about – price. 
 
-The bar plot of the average price of the car in different years showed that the vintage cars produced around the year 1965 are pricier than the newer cars. And the price increased steadily after around 1985. The box plots and t-tests suggested the solid statistical significance of the difference between the mean price of vehicles with a warranty and without warranty and diesel and gasoline engine types. In our analysis, one-way and two-way ANOVA were used to check the difference between more than three levels of categorical data and price. The results suggested that color, manufacturer name, and body type had mean price differences.
+The bar plot of the average price of the car in different years showed that the vintage cars produced around the year 1965 are pricier than the newer cars. And the price increased steadily after around 1985. The box plots and t-tests suggested the solid statistical significance of the difference between the mean price of vehicles with a warranty and without warranty and diesel and gasoline engine types. In the analysis, one-way and two-way ANOVA were used to check the difference between more than three levels of categorical data and price. The results suggested that color, manufacturer name, and body type had mean price differences.
 
 
 According to the above analysis, the features that influence the prices of cars in the used car market in Belarus are year of production, body type, manufacture name, engine capacity, odometer value, engine type color, and transmission. 
 
 After conducting the EDA and hypothesis tests on the data, the team has concluded that the initial SMART research question were successful answered.
 
-Our future work for this topic is building up a model to predict the price based on the analysis we explored to provide more effective decision-making services for future vehicle buyers and sellers.
+PatternSix's future work for this topic is building up a model to predict the price based on the analysis we explored to provide more effective decision-making services for future vehicle buyers and sellers.
 
 
