@@ -58,7 +58,6 @@ names(df)[names(df) == 'price_usd'] <- 'price'
 
 
 
-
 ## Renaming features
 ```{r include=FALSE}
 names(df)[names(df) == 'price_usd'] <- 'price'
@@ -83,6 +82,13 @@ Engine Capacity has 10 null values, PattaernSix dropped the rows with null value
 #Droping the rows with null values 
 df <- df[complete.cases(df), ]
 ```
+
+```{r}
+outliers = boxplot(df$price, plot=FALSE)$out
+length(outliers)
+# df2<- df[which(df$price %in% outliers),]
+```
+There are `length(outliers)` outliers for price in this data set. These data will not be eliminated since they also reflect the actual situation in the used car market. They represent the group that was a relatively new car with a higher price.
 
 ## Summary of Dataset
 ```{r include=FALSE}
