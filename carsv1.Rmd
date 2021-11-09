@@ -52,6 +52,7 @@ Considering that the Belarus used car data set was gathered from the web, this r
 ## Data Preprocessing
 
 ### Data Import and Cleaning
+
 ```{r cars, include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
@@ -59,20 +60,17 @@ df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
 "state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
 names(df)[names(df) == 'price_usd'] <- 'price'
-
 ```
 
 
 
-<<<<<<< Updated upstream
 
-## Renaming features
-=======
 #### Renaming features
->>>>>>> Stashed changes
+
 ```{r include=FALSE}
 names(df)[names(df) == 'price_usd'] <- 'price'
 ```
+
 PatternSix renamed 'price_usd' to 'price'.
 
 ```{r include=FALSE}
@@ -89,8 +87,7 @@ Engine Capacity has 10 null values, PattaernSix dropped the rows with null value
 df <- df[complete.cases(df), ]
 ```
 
-<<<<<<< Updated upstream
-=======
+
 ```{r}
 outliers = boxplot(df$price, plot=FALSE)$out
 length(outliers)
@@ -98,7 +95,7 @@ length(outliers)
 ```
 There are `length(outliers)` outliers for price in this data set. These data will not be eliminated since they also reflect the actual situation in the used car market. They represent the group that contain relatively new cars with higher prices.
 
->>>>>>> Stashed changes
+
 ## Summary of Dataset
 ```{r include=FALSE}
 library(corrplot)
