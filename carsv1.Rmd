@@ -27,7 +27,7 @@ options(scientific=T, digits = 3)
 # use scipen=999 to prevent scientific notation at all times
 ```
 
-# Data Import and Cleaning
+## Data Import and Cleaning
 ```{r cars, include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
@@ -37,6 +37,8 @@ df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "col
 names(df)[names(df) == 'price_usd'] <- 'price'
 
 ```
+
+
 
 
 ## Renaming features
@@ -70,12 +72,40 @@ library(tidyverse)
 df %>% select_if(is.numeric)->cars_numerical
 ```
 
-The dataset is collected from various web resources in order to explore the used cars market and try to build a model that effectively predicts the price of the car based on its parameters (both numerical and categorical).
 
-The data is scraped in Belarus (western Europe) on the 2nd of December 2019, with `r dim(df)[1]` rows and `r dim(df)[2]` features. There are `r dim(cars_numerical)[2]` numerical features and `r (dim(df)[2])-(dim(cars_numerical)[2])` categorical features.
+•	The Dataset used for the project is “Belarus-Used-cars-catalog” taken from the public data source Kaggle (An online community of data scientists and machine learning practitioners).
+
+  Link: https://www.kaggle.com/lepchenkov/usedcarscatalog?select=cars.csv
+
+•	The Dataset contains information about the Belarus (western Europe) used cars market from the year 2019.
+
+•	The total number of variables in the data set is 19.
+
+•	The total number of observations in the data set is 38521.
+
+•	This Dataset helps the team in exploring the used car market in Belarus and build a model to find the relationship between car prices with changing features that can effectively predict the price of a used car, given the certain parameters (both numerical and categorical).
+
+•	From the Dataset we mainly focus on these features as mentioned below to perform Exploratory Data Analysis:
+
+  •	Color
+  •	Transmission
+  •	Odometer value
+  •	Year of Production
+  •	Body type
+  •	Number of Photos
+  •	Duration of days
 
 
-# Exploratory Data Analysis
+### Limitations of Dataset:
+1.	The “Belarus-Used-cars-catalog” dataset is limited to only Belarus which in effect does not help Pattern 6 to make assumptions about used car markets in other countries.
+
+2.	There is no ‘electric’ car category as the dataset is limited to gasoline and diesel.
+
+3.	There could have been more features found in the dataset which Team Pattern 6 could have used for the Exploratory Data Analysis and get a more detailed analysis when comparing multiple features.
+
+
+
+## Exploratory Data Analysis
 ```{r echo=TRUE}
 # summary(cars_numerical)
 library(fBasics)
@@ -86,7 +116,7 @@ The table above gives us the basic statistic measures of numeric data. There are
 
 ## Normality tests
 
-This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000 in __R__,and our dataset is more extensive than this value, so we will use the *Kolmogorov-Smirnov (K-S) normality test* instead.
+This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and our data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
 
 ```{r, fig.height=3}
 library(gridExtra)
@@ -96,7 +126,7 @@ plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB"
 grid.arrange(plot1, plot2, ncol=2, nrow=1)
 ```
 
-As we can find in the quantile-quantile plot and the histogram,`price` is not normally distributed, if we want use price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
+As it could be found in the quantile-quantile plot and the histogram,`price` are not normally distributed, if PatternSix wants to use the price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
 
 ```{r}
 plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
@@ -120,7 +150,7 @@ grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
 
 The Q-Q plots and histograms also show evidence of non-normality. The `odometer_value`, `engine_capacity` and `number_of_photos` are right-skewed, while `year_produced` is left-skewed.
 
-Now we apply the *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
+Now let's apply *Kolmogorov-Smirnov normality test* into our data. The null hypothesis of this test is 'sample distribution is normal'.
 
 ```{r, warning=FALSE}
 ks.test(df$price, 'pnorm', mean=mean(df$price), sd=sd(df$price))
@@ -130,30 +160,58 @@ ks.test(df$engine_capacity, 'pnorm', mean=mean(df$engine_capacity), sd=sd(df$eng
 ks.test(df$number_of_photos, 'pnorm', mean=mean(df$number_of_photos), sd=sd(df$number_of_photos))
 ```
 
-The p-value of all the numeric variables are < 2e-16 which is less than 0.05, therefore we conclude that the distributions of all our numeric variables are significantly different from normal distribution. They have the same results with Q-Q plots and histograms.
+The p-value of all the numeric variables are < 2e-16 which is less than 0.05, therefore it could be concluded that the distributions of all our numeric variables are significantly different from normal distribution. They have the same results with Q-Q plots and histograms.
 
-Our sample size for this data is 38521. Based on the central limit theorem, we generate the rest analysis using the original data.
+Our sample size for this data is 38521. Based on the central limit theorem, the rest analysis will be generated using the original data.
+
+
+
+## SMART Qeustions
+The following are our SMART questions
+
+**Specific**: Is it possible to build a model to find a relationship between car prices by looking at different factors that include numerical, categorical values and further use the model to predict car prices?
+
+**Measurable**: Is it possible to measure metrics such as r-square, MAE, MSE and RMSE with your categories?
+
+**Achievable**: Based on the preliminary analysis that the team concluded is it possible to find a pattern between target variable(car price) and the independent variable?
+
+**Relevant**: Can the research help the sellers and buyers in the used car market to make an informed decision about the price of the vehicle?
+
+**Time Oriented**: Will The initial analysis be completed by November, 2nd with the presentation?
+
+
+
+
+
 
 ## Correlation Plot
-```{r}
+
+```{r Fig 1}
 corrplot(cor(cars_numerical), method = 'number')
 ```
+Figure 1 shows the correlation between the numerical features.
 
-The year_produced feature has the highest positive correlation with the price
-Lets try to plot it with a graph
+The team used a correlation plot for checking the correlation between continuous variables. Year of production was highly correlated with price with correlation coefficient(cc)=0.7. Odometer value had a negative correlation with year produced (cc=-0.49) and price (cc=-0.42). Engine capacity also had a positive correlation with price (cc=0.30). 
 
-```{r}
+
+```{r Fig. 2}
 library(ggplot2)
 
 df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year', x="year produced", y = "mean price per year") + theme(plot.title = element_text(hjust = 0.5))
 ```
-There is a very interesting pattern we can observe. The vintage cars are pricier than the new cars. 
-After around 1985, the price increase steadily.
+
+Figure 2 shows the average price of the car for each year produced between 1940 and 2020. The team observed that there is a steady decrease in the price as the car gets older. However around 1990, it could be observed that the prices spike as cars before 1990 fall under the classic or vintage category.
+
+The bar plot of the average price of the car in different years showed that the vintage cars produced around the year 1965 are pricier than the newer cars. And the price increased steadily after around 1985.
 
 
-```{r}
+```{r Fig. 3}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capicity = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=engine_capacity,y=mean_price_per_capicity)) +  geom_point(color = "#00AFBB") + labs(title='Avg Price of Car for engine capacity', x='Engine Capacity', y='Mean Price') + theme(plot.title = element_text(hjust = 0.5))
 ```
+Figure 3 shows the average price of the car for each engine capacity. 
+The team observed a positive linear trend between the mean price per engine capacity and the capacity 
+
+
 
 ```{r}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
@@ -161,12 +219,11 @@ cor(df4)
 #corrplot(cor(cars_numerical), method = 'number')
 ```
 
-Do we see a trend for the mean price with Engine Capacity
-
-Above you can see the scatterplot relationship graph between mean price and engine capacity. The graph clearly displays a positive correlation between the two variables. The correlation comes down to approximately '0.6'. Please note that this is mean price, not price. Price-Engine capacity correlation that we found was 0.30. This could be explained by the outliers that are found in higher engine capacity. 
+The observed correlation coefficient equals 0.6. However, in Figure 1 it was observed that the correlation coefficient between price and engine capacity was 0.3. This trend could be explained by the outliers which are found in higher engine capacity.
 
 
-```{r}
+
+```{r Fig 4}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
 cor(df4)
 #corrplot(cor(cars_numerical), method = 'number')
@@ -176,27 +233,45 @@ cor(df4)
 df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-## Mean Difference Between Variables
+Figure 4 shows the mean engine capacity for different body type using a box-plot. From the initial analysis the team observed for each of the groups there is a difference in median.
+
+
+## T test
+
+When there are two samples drawn from the same population and the goal is to test whether the mean of respective two samples are the same, it is wise to perform the student-t test, or t-test in short. The reason team PatternSix did not choose the Z-test is that the team did not know the population standard deviation. Thus using t-test, team used sample standard deviation (s) to estimate the population parameter (σ).
+
+
 ### Warranty vs Price
+PatternSix tested some of the features against prices respectively since price is going to be the dependent variable. First one the team looked at is whether cars had warranties versus different average prices. A box-plot would help show the relationship between these two.
+
+
 ```{r}
 df %>% ggplot(aes(has_warranty, price, fill=has_warranty)) + geom_boxplot() + ggtitle('Has_Warranty vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
+From the graph, one could see that the average prices differ significantly between warrantied and non-warrantied cars.
 
-The graph indicates a substantial difference of mean between the two subsets
-Let's run a t-test to check the statistical significance 
+The t-test was performed to verify the assumptions.
+
 ```{r T test, echo=TRUE}
 summary(df$has_warranty)
 has = subset(df, has_warranty == "True")
 hasnot = subset(df, has_warranty == "False")
 t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 ```
-The t-test on the has_warranty feature suggest strong statistical significance and thus we can reject null hypothesis, suggesting that there is a difference between the true means of the two subsets.
+
+PatternSix subset the prices for cars based on whether they have warranties. The null hypothesis H0 is that μ1 = μ2. The alternative hypothesis H1 is μ1 <> μ2. From the result, because p-value is extremely low, team rejects the null hypothesis and concludes that whether cars have warranties does affect average price of cars.
 
 
 ###  Engine Types vs Price
+
+Next, lets take a look at whether different engine types have different average prices. same as above, PatternSix drew a box-plot to get a visual idea.
+
 ```{r}
 df %>% ggplot(aes(engine_type, price,fill=engine_type)) + geom_boxplot()+ ggtitle('Engine_type vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
+
+This time, from the graph, PatternSix could not get a conclusion right away. That is why it is crucial to perform the formal test.
+
 
 ```{r echo=TRUE}
 summary(df$engine_type)
@@ -205,11 +280,18 @@ gas = subset(df, subset = df$engine_type == "gasoline")
 t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 ```
 
-The t-test suggest there is a difference between the true means of the two subsets(Diesel,Gas).
+PatternSix subset prices for cars based on different engine types. The null hypothesis H0 is μ1 = μ2. The null hypothesis is μ1 <> μ2.
+
+Surprisingly, the p-value is extremely low, which tells the team to reject the null hypothesis and  conclude for different engine types, their average prices do differ.
 
 
 
-## Independence and Homogeneity
+## $Chi^2$ test
+
+In the data set, not only do there are numerical variables,but there are also categorical variables.
+For categorical variables, data set does not fit the requirements for goodness of fit test but the data has to be tested for colinearity between categorical variables for variable selection in model building. Test of Independence thus is performed. 
+
+
 ```{r}
 contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
 
@@ -224,22 +306,31 @@ contgcTbl3 = table(df$manufacturer_name, df$color)
 
 (Xsq3 = chisq.test(contgcTbl3))
 
-(contgcTbl4 = table(df$color, df$transmission))
+contgcTbl4 = table(df$color, df$transmission)
 
 (Xsq4 = chisq.test(contgcTbl4))
+summary(Xsq4)
 
-(contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable))
-
+contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable)
 (Xsq5 = chisq.test(contgcTbl5))
 
 
 ```
-For test of independence homogeneity, we tested manufacturer names against whether has warranty, the body type of cars, car colors and whether the car is exchangable, which are for table 1, 2 , 3 and 5. We also tested car colors against transmissions, which is table 4.
 
-For table 1, 2 and 3, because many of the expected values are so small, the approximation of p may not be right.
+The pairs that were chosen here are different manufacturers versus whether cars have warranties, different body types, different colors and whether cars are exchangable, respectively. In addition, the test between different colors and whether the car is automatic or manual is also conducted. To make presenting results easier, these tests are assigned as 1, 2, 3, 4, 5 respectively. One thing to note here is that for the last test, to put which variable in row position or column position does not matter as a result of non casualty between them.
 
 
-## Influential Feactures of Prices
+PatternSix's null hypotheses are that all pairs are independent. Interestingly, wide range of results can be observed. For test 1, 2, 3, a warning that the chi-square test approximation might be incorrect pops up. The reason for that is to use the test of independence, sample size has to be large enough. General rule is that if expected frequencies for 20% of the categories are less than 5,it can't be used to test independence. That is exactly what happened here. As a result, these test results can't be used.
+
+For test 4, between different manufacturers and whether cars are exchangable, and for test 5, between different colors and whether the car is automatic or manual, the results are acceptable. Due to low p-values in both tests, the null hypothesis has been rejected, which means for test 4 and 5 testing pairs, they are not independent.
+
+
+## ANOVA 
+
+Due to the fact that there are numerous independent variables to test on, in order to improve efficiency, ANOVA was performed.
+
+Same as above, a graph would give the observer an overview of relationships against prices.
+
 ### Colors by Mean Price
 ```{r}
 df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB") + labs(x='Color',y='Price mean') + ggtitle('Color vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
@@ -256,7 +347,9 @@ df2 = df %>% group_by(manufacturer_name) %>% summarise(manuf_price_mean = mean(p
 df2 %>% slice(1:10) %>%  ggplot(aes(x = reorder(manufacturer_name, -manuf_price_mean),manuf_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Manufacturer', y='Mean of price')  + ggtitle('Manufacturer vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-From the initial analysis, for the above 3 plots there seems to be difference among the true means of their respective groups. Lets run an anova test on each of the case to check the hypothesis
+Here there are three graphs, average prices for different colors, for different body types and for top ten manufacturers. The last one is showing limited data by reason of display limitations.
+
+It could be seen that average price differences are all significant between groups in colors, body types and top ten manufacturers. Same as the t-test,a formal test should be performed to get correct conclusions.
 
 
 ### One Way ANOVA
@@ -272,53 +365,14 @@ summary(df_aov_2)
 
 ```
 
-For all the three cases there seems to be statistically significant difference the the true means
-The high statistical significance suggest that there is a difference between the true mean of the prices for differently colored vehicles, for different manufacturer and for different body types
+Pairs that were chosen here are prices versus different colors, different manufacturers and different body types, respectively. PatternSix's null hypotheses are that for all pairs, they are independent, same as the $Chi^2$ test. Because there are multiple categories for categorical variables for this test, the alternative hypotheses are that all these categories are not all same. 
+
+For all three cases, in accordance with the extreme low p-values, the null hypotheses is rejected, which means all categories are not all the same within a test.
 
 
+The Turkey test has been performed in this data set. However, due to excessive levels in categorical variables, it is impractical to incorporate it into the report.
 
-### Two Way ANOVA
-```{r}
-df_aov = aov(price ~  manufacturer_name * body_type , df)
-summary(df_aov)
-
-#Check for homoscedasticity 
-#par(mfrow=c(2,2))
-#plot(df_aov)
-#par(mfrow=c(1,1))
-```
-
-The high statistical significance show that the interaction term can explain the variation in the price variable.
-
-
-
-```{r}
-df_aov = aov(price ~ manufacturer_name * color, df)
-summary(df_aov)
-
-#TukeyHSD(df_aov)
-
-```
-Because the p < 0.01, we reject that all colors sell the same price, all manufacturer sell the same price and manufacturers and colors combined sell the same price.
-
-
-
-```{r pressure, echo=FALSE}
-#boxplot(df['manufacturer_name'], df['price'])
-#car_lm = lm(price ~ ., data = df2)
-
-
-#library(s20x)
-#pairs20x(df2)
-```
-```{r}
-#library(ezids)
-#loadPkg("corrplot")
-#corrplot(df2)
-```
-
-
-# Conclusion and Discussions
+## Conclusion and Discussions
 Overall, our work involved removing the null values for data preprocessing, data exploratory, normality check, finding the correlation between continuous variables, and finding the mean price difference between multiple categorical variables. The technologies we used included a table summary, normality tests, t-test, ANOVA, and Chi-square test. We used a variety of plots such as bar plot, scatter plot, box plot, Q-Q plot, and histogram to support different tests.
 
 For more details, we deleted ten null values in the data preprocessing part. Then we generated a table to show the basic statistical measurements of numeric data. The price of this data offers mean=6640 and standard deviation=6430. The other two measurements we may consider are skewness and kurtosis. These two statistical values indicated that the data were highly skewed.
@@ -331,64 +385,11 @@ We then generated other exploratory data analysis for the feature that we were m
 
 The bar plot of the average price of the car in different years showed that the vintage cars produced around the year 1965 are pricier than the newer cars. And the price increased steadily after around 1985. The box plots and t-tests suggested the solid statistical significance of the difference between the mean price of vehicles with a warranty and without warranty and diesel and gasoline engine types. In our analysis, one-way and two-way ANOVA were used to check the difference between more than three levels of categorical data and price. The results suggested that color, manufacturer name, and body type had mean price differences.
 
-## need to combined with SMART questions
-According to the above analysis, the features that influence the prices of cars in the used car market in Belarus are year of production, body type, manufacture name, engine capacity, odometer value, engine type color, and transmission. The result perfectly answered our question in the beginning.
+
+According to the above analysis, the features that influence the prices of cars in the used car market in Belarus are year of production, body type, manufacture name, engine capacity, odometer value, engine type color, and transmission. 
+
+After conducting the EDA and hypothesis tests on the data, the team has concluded that the initial SMART research question were successful answered.
 
 Our future work for this topic is building up a model to predict the price based on the analysis we explored to provide more effective decision-making services for future vehicle buyers and sellers.
 
-
-
-# 2nd Phase( Skipped for now)
-```{r}
-#loadPkg("leaps")
-#reg.best10 <- leaps::regsubsets(price_usd~. , data = df, nvmax = 10, nbest = 1, method = "exhaustive")  
-
-# leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
-#The plot will show the Adjust R^2 when using the variables across the bottom
-#plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
-#plot(reg.best10, scale = "r2", main = "R^2")
-# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
-#plot(reg.best10, scale = "bic", main = "BIC")
-#plot(reg.best10, scale = "Cp", main = "Cp")
-#summary(reg.best10)
-```
-
-##Target valrible distribution
-```{r}
-library(ggplot2)
-p <-  ggplot(df, aes(price)) 
-#p + geom_boxplot()
-p + geom_density()
-#df %>%  ggplot( aes(x=manufacturer_name, y=price_usd)) +   geom_boxplot(outlier.colour="red", #outlier.shape=8,outlier.size=4)
-#p + geom_point(x='price_usd',y='manufacturer_name')
-```
-
-
-
-
-We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
-Let try the box-Cox transformation to normalize the target variable
-
-```{r}
-library(MASS)
-y = df$price
-df %>% ggplot(aes(price)) + geom_density()
-
-result = boxcox(y~1)
-#Getting the optimal lambda value
-mylambda = result$x[which.max(result$y)]
-mylambda
-#Transforming the price to new feature using the lambda value
-# To get the original price, perform inverse operation to the one below
-price_normal = (y^mylambda-1)/mylambda
-data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
-
-df <- cbind(df,price_normal)
-```
-
-```{r}
-library(ggplot2)
-
-df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year') + theme(plot.title = element_text(hjust = 0.5))
-```
 
