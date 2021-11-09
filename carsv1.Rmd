@@ -5,6 +5,7 @@ date: "11/9/2021"
 # date: "`r Sys.Date()`"
 output:
   html_document:
+    theme: cerulean
     code_folding: hide
     number_sections: false
     toc: yes
@@ -19,7 +20,7 @@ output:
 # some of common options (and the defaults) are: 
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
-knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "markup", message = F, comment = NA)
 # knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 # options(scipen=9, digits = 3) 
@@ -45,7 +46,12 @@ Considering that the Belarus used car data set was gathered from the web, this r
 
 
 
-## Data Import and Cleaning
+
+
+
+## Data Preprocessing
+
+### Data Import and Cleaning
 ```{r cars, include=FALSE}
 
 df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
@@ -58,22 +64,21 @@ names(df)[names(df) == 'price_usd'] <- 'price'
 
 
 
+<<<<<<< Updated upstream
 
 ## Renaming features
+=======
+#### Renaming features
+>>>>>>> Stashed changes
 ```{r include=FALSE}
 names(df)[names(df) == 'price_usd'] <- 'price'
 ```
-
-
-Checking for the the factors and numerical features   
+PatternSix renamed 'price_usd' to 'price'.
 
 ```{r include=FALSE}
 str(df)
 ```
 
-Looks perfectly fine
-
-## Data Preprocessing
 ```{r include=FALSE}
 colSums(is.na(df))
 ```
@@ -84,6 +89,16 @@ Engine Capacity has 10 null values, PattaernSix dropped the rows with null value
 df <- df[complete.cases(df), ]
 ```
 
+<<<<<<< Updated upstream
+=======
+```{r}
+outliers = boxplot(df$price, plot=FALSE)$out
+length(outliers)
+# df2<- df[which(df$price %in% outliers),]
+```
+There are `length(outliers)` outliers for price in this data set. These data will not be eliminated since they also reflect the actual situation in the used car market. They represent the group that contain relatively new cars with higher prices.
+
+>>>>>>> Stashed changes
 ## Summary of Dataset
 ```{r include=FALSE}
 library(corrplot)
@@ -105,7 +120,7 @@ df %>% select_if(is.numeric)->cars_numerical
 
 •	This Data set helps the team in exploring the used car market in Belarus and build a model to find the relationship between car prices with changing features that can effectively predict the price of a used car, given the certain parameters (both numerical and categorical).
 
-•	From the Data set we mainly focus on these features as mentioned below to perform Exploratory Data Analysis:
+•	From the Data set the team mainly focuses on these features as mentioned below to perform Exploratory Data Analysis:
 
   •	Color
   •	Transmission
@@ -124,17 +139,32 @@ df %>% select_if(is.numeric)->cars_numerical
 3.	There could have been more features found in the data set which Team Pattern 6 could have used for the Exploratory Data Analysis and get a more detailed analysis when comparing multiple features.
 
 
+## SMART Questions
+The following are the SMART questions which PatternSix came up with and followed.
+
+**Specific**: Is it possible to build a model to find a relationship between car prices by looking at different factors that include numerical, categorical values and further use the model to predict car prices?
+
+**Measurable**: Is it possible to measure metrics such as r-square, MAE, MSE and RMSE with the data set categories?
+
+**Achievable**: Based on the preliminary analysis that the team concluded is it possible to find a pattern between target variable(car price) and the independent variable?
+
+**Relevant**: Can the research help the sellers and buyers in the used car market to make an informed decision about the price of the vehicle?
+
+**Time Oriented**: Will The initial analysis be completed by November, 2nd with the presentation?
+
+
 
 ## Exploratory Data Analysis
 ```{r echo=TRUE}
 # summary(cars_numerical)
-library(fBasics)
+library(fBasics) 
+options(width = 300 )
 basicStats(cars_numerical)
 ```
 
 The table above gives the basic statistic measures of numeric data. There are six numerical variables in the dataset. The one that is most important is the used car's price. It has mean=6640, standard deviation(sd)=6430. The odometer_value with mean=249000, sd=136000. The year_produced with mean=2000 and sd=8.06. The engine_capacity has mean=2.06 and sd=0.67. The absolute values of skewness for all the variables are all greater than 1, which indicates they are highly skewed. The kurtosis values are all greater than 0, indicating they are sharply peaked with heavy tails. More analysis between other variables is shown below.
 
-## Normality tests
+### Normality tests
 
 This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and Belarus used car market data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
 
@@ -186,25 +216,13 @@ Our sample size for this data is 38521. Based on the central limit theorem, the 
 
 
 
-## SMART Questions
-The following are the SMART questions which PatternSix came up with and followed.
-
-**Specific**: Is it possible to build a model to find a relationship between car prices by looking at different factors that include numerical, categorical values and further use the model to predict car prices?
-
-**Measurable**: Is it possible to measure metrics such as r-square, MAE, MSE and RMSE with the data set categories?
-
-**Achievable**: Based on the preliminary analysis that the team concluded is it possible to find a pattern between target variable(car price) and the independent variable?
-
-**Relevant**: Can the research help the sellers and buyers in the used car market to make an informed decision about the price of the vehicle?
-
-**Time Oriented**: Will The initial analysis be completed by November, 2nd with the presentation?
 
 
 
 
 
 
-## Correlation Plot
+### Correlation Plot
 
 ```{r Fig 1}
 corrplot(cor(cars_numerical), method = 'number')
@@ -258,12 +276,12 @@ df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=
 Figure 4 shows the mean engine capacity for different body type using a box-plot. From the initial analysis the team observed for each of the groups there is a difference in median.
 
 
-## T test
+### T test
 
 When there are two samples drawn from the same population and the goal is to test whether the mean of respective two samples are the same, it is wise to perform the student-t test, or t-test in short. The reason team PatternSix did not choose the Z-test is that the team did not know the population standard deviation. Thus using t-test, team used sample standard deviation (s) to estimate the population parameter (σ).
 
 
-### Warranty vs Price
+#### Warranty vs Price
 
 PatternSix tested some of the features against prices respectively since price is going to be the dependent variable. First one the team looked at is whether cars had warranties versus different average prices. A box-plot would help show the relationship between these two.
 
@@ -286,7 +304,7 @@ t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 PatternSix subset the prices for cars based on whether they have warranties. The null hypothesis H0 is that μ1 = μ2. The alternative hypothesis H1 is μ1 <> μ2. From the result, because p-value is extremely low, team rejects the null hypothesis and concludes that whether cars have warranties does affect average price of cars.
 
 
-###  Engine Types vs Price
+####  Engine Types vs Price
 
 Next, lets take a look at whether different engine types have different average prices. same as above, PatternSix drew a box-plot to get a visual idea.
 
@@ -304,13 +322,13 @@ gas = subset(df, subset = df$engine_type == "gasoline")
 t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 ```
 
-PatternSix subset prices for cars based on different engine types. The null hypothesis H0 is μ1 = μ2. The null hypothesis is μ1 <> μ2.
+PatternSix subset prices for cars based on different engine types. The null hypothesis H0 is μ1 = μ2. The null hypothesis is μ1 $\neq$ μ2.
 
 Surprisingly, the p-value is extremely low, which tells the team to reject the null hypothesis and conclude for different engine types, their average prices do differ.
 
 
 
-## $Chi^2$ test
+### $Chi^2$ test
 
 In the data set, not only do there are numerical variables,but there are also categorical variables.
 For categorical variables, data set does not fit the requirements for goodness of fit test but the data has to be tested for co-linearity between categorical variables for variable selection in model building. Test of Independence thus is performed. 
@@ -333,7 +351,6 @@ contgcTbl3 = table(df$manufacturer_name, df$color)
 contgcTbl4 = table(df$color, df$transmission)
 
 (Xsq4 = chisq.test(contgcTbl4))
-summary(Xsq4)
 
 contgcTbl5 = table(df$manufacturer_name, df$is_exchangeable)
 (Xsq5 = chisq.test(contgcTbl5))
@@ -346,26 +363,26 @@ The pairs that were chosen here are different manufacturers versus whether cars 
 
 PatternSix's null hypotheses are that all pairs are independent. Interestingly, wide range of results can be observed. For test 1, 2, 3, a warning that the chi-square test approximation might be incorrect pops up. The reason for that is to use the test of independence, sample size has to be large enough. General rule is that if expected frequencies for 20% of the categories are less than 5,it can't be used to test independence. That is exactly what happened here. As a result, these test results can't be used.
 
-For test 4, between different manufacturers and whether cars are exchangable, and for test 5, between different colors and whether the car is automatic or manual, the results are acceptable. Due to low p-values in both tests, the null hypothesis has been rejected, which means for test 4 and 5 testing pairs, they are not independent.
+For test 4, between different manufacturers and whether cars are exchangeable, and for test 5, between different colors and whether the car is automatic or manual, the results are acceptable. Due to low p-values in both tests, the null hypothesis has been rejected, which means for test 4 and 5 testing pairs, they are not independent.
 
 
-## ANOVA 
+### ANOVA 
 
 Due to the fact that there are numerous independent variables to test on, in order to improve efficiency, ANOVA was performed.
 
 Same as above, a graph would give the observer an overview of relationships against prices.
 
-### Colors by Mean Price
+#### Colors by Mean Price
 ```{r}
 df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB") + labs(x='Color',y='Price mean') + ggtitle('Color vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-### Body Types by Mean Price
+#### Body Types by Mean Price
 ```{r}
 df %>% group_by(body_type) %>% summarise(body_price_mean = mean(price))%>% ggplot(aes(x = reorder(body_type, -body_price_mean),body_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Body Type', y='Mean of price') + ggtitle('Body Type vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-### Top 10 Manufacturers by Mean Price
+#### Top 10 Manufacturers by Mean Price
 ```{r}
 df2 = df %>% group_by(manufacturer_name) %>% summarise(manuf_price_mean = mean(price)) %>% arrange(desc(manuf_price_mean)) 
 df2 %>% slice(1:10) %>%  ggplot(aes(x = reorder(manufacturer_name, -manuf_price_mean),manuf_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Manufacturer', y='Mean of price')  + ggtitle('Manufacturer vs Price ') + theme(plot.title = element_text(hjust = 0.5))
@@ -376,7 +393,7 @@ Here there are three graphs, average prices for different colors, for different 
 It could be seen that average price differences are all significant between groups in colors, body types and top ten manufacturers. Same as the t-test,a formal test should be performed to get correct conclusions.
 
 
-### One Way ANOVA
+#### One Way ANOVA
 ```{r}
 df_aov_1 = aov(price ~  color , df)
 summary(df_aov_1)
@@ -414,6 +431,13 @@ According to the above analysis, the features that influence the prices of cars 
 
 After conducting the EDA and hypothesis tests on the data, the team has concluded that the initial SMART research question were successful answered.
 
-PatternSix's future work for this topic is building up a model to predict the price based on the analysis we explored to provide more effective decision-making services for future vehicle buyers and sellers.
+PatternSix's future work for this topic is building up a model to predict the price based on the analysis that was explored to provide more effective decision-making services for future vehicle buyers and sellers.
 
+## Bibliography
+Ben Ellencweig, Sam Ezratty, Dan Fleming, and Itai Miller. (2019, June 6). Mckinsey & Company.    Retrieved from Mckinsey & Company Website:     
+https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-cars-new-platforms-accelerating-sales-in-a-digitally-disrupted-market
+
+
+Isidore, C. (2021, September 28). Retrieved from CNN Business: 
+https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
 
