@@ -27,6 +27,26 @@ options(scientific=T, digits = 3)
 # use scipen=999 to prevent scientific notation at all times
 ```
 
+# Why Belarus Used Car Market?
+
+As it is widely known, for the last  year and a half world has been dealing with an unprecedented event; the corona virus pandemic. While this affected many areas of people’s lives, one thing that many did not talk about was its effects on the global supply chain. People stocked up early on during the pandemic, fearing a potential scarcity in finding some of the most commonly found consumer items.  For example, hygienic wipes was one of the most popular scarce items for many months,  most large market chains, CVS-target-Safeway, limited people from buying more than one swipe at once. 
+	
+	While the world is recovering from this once in a hundred years phenomena, car market was also hit by the sudden changes. In many countries around the world, it is very hard to find first hand cars (Isidore, 2021)  and because of that reason more and more people are looking to the used car market. For this reason Team Pattern 6 found it fit to take a deep dive in to the used car market and help potential buyers/sellers to get the best prices for the specific features that they are looking for. 
+	
+	As prospective data scientists, Team Pattern 6 wanted to take a recent issue at hand just like a true data scientist does and explain the findings using the best up to date data analysis and data visualization techniques. Pattern 6 found the Belarus Car Market data particularly interesting due to the fact that not only the data set had the necessary amount of multi-level variables but also because of the fact that team saw that there was a story to tell to the common consumer.  
+	
+
+# Prior Research
+
+Research and analysis have been rampant in the field of used car prices. For example, a simple search on Google Scholar shows over a million articles written. Some studies are back from 1960s. Articles could be found from all over the World, from countries like Turkey to Australia. 
+
+One of the interesting researches that inspired team Pattern 6 was the impact of digital disruption (Ben Ellencweig, Sam Ezratty, Dan Fleming, and Itai Miller, 2019) . The most interesting takeaway from this research was the fact that used car market was not sensible to macro-economic shocks as much as new cars. The exhibit that is displayed in the analysis suggest that used car sales were affected less by crisis such as dot-com bubble or rising interest rates in the beginning of 1990s . 
+
+Considering that the Belarus used car data-set was gathered from the web, this research was an important finding for this team’s research. 
+
+
+
+
 # Data Import and Cleaning
 ```{r cars, include=FALSE}
 
