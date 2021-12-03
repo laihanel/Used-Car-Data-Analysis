@@ -59,7 +59,6 @@ df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
 df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
 "state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
-names(df)[names(df) == 'price_usd'] <- 'price'
 ```
 
 
@@ -440,7 +439,12 @@ https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-ca
 Isidore, C. (2021, September 28). Retrieved from CNN Business: 
 https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
 
-
+```{r one hot encoder}
+library(caret)
+dummy = dummyVars("price~.", data = df)
+df = data.frame(predict(dummy, newdata = df))
+df
+```
 ### Feautre selection
 #Not working
 ```{r}
@@ -630,4 +634,28 @@ vifcor(fit5)
 ```
 
 
+# y outlier check
+```{r studentized deleted residual}
+install.packages("olsrr")
+library(olsrr)
+ols_plot_resid_stud_fit(model, threshold = NULL, print_plot = TRUE) # replace model
+```
 
+# x outlier check
+```{r cook's distance}
+plot(cooks.distance(model)) # replace model
+```
+# heteroscedasticity check
+```{r residual plot}
+resid = residuals(model) # replace model
+yfitted = fitted.values(model) # replace model
+plot(yfitted, resid, xbar = "fitted value", ybar = "residual")
+```
+
+# multicollinearity removal
+```{r partial least square}
+install.packages("pls")
+library(pls)
+pls1 = plsr(price ~ . data = df, validation = "CV")
+summary(pls1, what = "all")
+```
