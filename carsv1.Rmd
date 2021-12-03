@@ -558,9 +558,6 @@ plot(fit3,which=1)
 ```
 
 
-
-
-
 Year_produced vs price
 ```{r}
 plot(df$year_produced, df$price, main="Year_produced vs price")
