@@ -459,6 +459,7 @@ summary(reg.best10)
 
 ```
 
+
 ```{r}
 # install.packages('party')
 library(party)
@@ -468,6 +469,7 @@ library(relaimpo)
 lmMod <- lm(price~. , data = df, )  # fit lm() model
 relImportance <- calc.relimp(lmMod, type = "lmg", rela = TRUE) 
 ```
+
 
 ```{r}
 library(caret)
@@ -488,6 +490,7 @@ predictors(results)
 # plot the results
 plot(results, type=c("g", "o"))
 ```
+
 
 ## Data Transformation
 We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
@@ -510,6 +513,7 @@ data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
 df <- cbind(df,price_normal)
 ```
 
+
 ## Models
 Taking all the features except model_name
 ```{r}
@@ -519,6 +523,7 @@ summary(fit1)
 library(car)
 print(vif(fit1))
 ```
+
 
 ### Polynomial Terms
 This has improved the fit but it will see whether changing some of the covariates can be helpful.
@@ -559,6 +564,12 @@ plot(fit3,which=1)
 Year_produced vs price
 ```{r}
 plot(df$year_produced, df$price, main="Year_produced vs price")
+
+```
+Year_produced vs price
+```{r}
+plot(df$year_produced, df$price, main="Year_produced vs price", pch=19)
+
 ```
 # Adding year_produced as polinomail of 2nd degree
 ```{r}
