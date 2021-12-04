@@ -439,12 +439,7 @@ https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-ca
 Isidore, C. (2021, September 28). Retrieved from CNN Business: 
 https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
 
-```{r one hot encoder}
-library(caret)
-dummy = dummyVars("price~.", data = df)
-df = data.frame(predict(dummy, newdata = df))
-df
-```
+
 ### Feautre selection
 #Not working
 ```{r}
@@ -638,24 +633,46 @@ vifcor(fit5)
 ```{r studentized deleted residual}
 install.packages("olsrr")
 library(olsrr)
-ols_plot_resid_stud_fit(model, threshold = NULL, print_plot = TRUE) # replace model
+ols_plot_resid_stud_fit(
+fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df), print_plot = TRUE)
+
 ```
 
 # x outlier check
 ```{r cook's distance}
-plot(cooks.distance(model)) # replace model
+plot(cooks.distance(
+fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df))) # replace model
 ```
-# heteroscedasticity check
-```{r residual plot}
-resid = residuals(model) # replace model
-yfitted = fitted.values(model) # replace model
-plot(yfitted, resid, xbar = "fitted value", ybar = "residual")
-```
+
+Since all the distances are well below than the treshold 1, there is low likelihood of X outliers.
 
 # multicollinearity removal
 ```{r partial least square}
 install.packages("pls")
 library(pls)
-pls1 = plsr(price ~ . data = df, validation = "CV")
+library(tidyverse)
+df = df[, !(names(df) %in% c("price"))]
+df %>% select_if(is.numeric)->cars_numerical
+cars_numerical = scale(cars_numerical)
+df %>% select_if(negate(is.numeric))->cars_cat
+df = cbind(cars_numerical, cars_cat)
+
+
+
+pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV")
 summary(pls1, what = "all")
+```
+
+
+To solve the problem of multicollinearity, Pattern6 utilized partial least square method.According to Frank L.E. and Friedman (1993), compared to other methods like ridge regression and PCR, fewer assumptions need to be made, and yield better results. Cross validation was performed to calculate RMSEP. The comps  are Letent Factors and at most 97 components were utilized. At around 86 components, the RMSEP gets extreme small value. Thus 86 components is used to generate the final model.
+
+```{r}
+
+
+pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV", jackknife = TRUE, ncomp = 86)
+coef(pls2)
 ```
