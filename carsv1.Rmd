@@ -295,6 +295,8 @@ The t-test was performed to verify the assumptions.
 summary(df$has_warranty)
 has = subset(df, has_warranty == "True")
 hasnot = subset(df, has_warranty == "False")
+has = subset(df, has_warranty == 1)
+hasnot = subset(df, has_warranty == 0)
 t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 ```
 
@@ -437,4 +439,195 @@ https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-ca
 
 Isidore, C. (2021, September 28). Retrieved from CNN Business: 
 https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
+
+
+### Feautre selection
+#Not working
+```{r}
+library("leaps")
+
+reg.best10 <- regsubsets(price~. , data = df, nvmax = 10, nbest = 1, method = "backward", really.big=T)  
+
+# leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
+#The plot will show the Adjust R^2 when using the variables across the bottom
+plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
+plot(reg.best10, scale = "r2", main = "R^2")
+# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
+plot(reg.best10, scale = "bic", main = "BIC")
+plot(reg.best10, scale = "Cp", main = "Cp")
+summary(reg.best10)
+
+```
+
+
+```{r}
+# install.packages('party')
+library(party)
+cf1 <- cforest(price~. , data = df, control=cforest_unbiased(mtry=2,ntree=10))
+install.packages('relaimpo')
+library(relaimpo)
+lmMod <- lm(price~. , data = df, )  # fit lm() model
+relImportance <- calc.relimp(lmMod, type = "lmg", rela = TRUE) 
+```
+
+
+```{r}
+library(caret)
+library(mlbench)
+
+
+test = df$price
+train = subset(df,select=-c(price,model_name,color,manufacturer_name))
+
+
+control <- rfeControl(functions=rfFuncs, method="cv", number=10)
+# run the RFE algorithm
+results <- rfe(train, test, rfeControl=control)
+# summarize the results
+print(results)
+# list the chosen features
+predictors(results)
+# plot the results
+plot(results, type=c("g", "o"))
+```
+
+
+## Data Transformation
+We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
+Let try the box-Cox transformation to normalize the target variable.
+```{r}
+library(MASS)
+y = df$price
+fit0 = lm(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
+summary(fit0)
+par(mfrow=c(1,2))
+plot(fit0,which=1)
+cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
+power <- cal.box$x[cal.box$y==max(cal.box$y)]
+power
+```
+Looks like a transformation close to 0.22 might be useful. Another advantage of transforming the response could be that it may lead to a model that predicts positive result.
+```{r}
+price_normal = (df$price^power-1)/power
+data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
+df <- cbind(df,price_normal)
+```
+
+
+## Models
+Taking all the features except model_name
+```{r}
+fit1 <- lm(price ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
+summary(fit1)
+
+library(car)
+print(vif(fit1))
+```
+
+
+### Polynomial Terms
+This has improved the fit but it will see whether changing some of the covariates can be helpful.
+The linearity assumption is checked by plots of residuals versus fitted values, plots of residuals versus explanatory variables, partial regression plots or gam plots. Here PatternSix apply the gam plot for our continuous variables to find the suitable transformation of the variables follow a linear model.
+The gam plots (one per explanatory variable) gives an idea which variables to transform: if the gam plot for a variable is straight, it suggests to leave that variable untransformed. If the plot for a particular variable is non-linear, the shape of the plot suggests the form of the transformation.
+
+```{r fig.align='center}
+library(mgcv)
+cal.gam <- gam(price_normal~s(odometer_value)+s(year_produced)+s(engine_capacity)+s(number_of_photos)+s(up_counter), data=df)
+
+summary(fit1)
+par(mfrow=c(2,3))
+plot(cal.gam)
+```
+These plots indicate that `odometer_value` and `up_counter` should remain untransformed (because the plot is relatively straight), but `year_produced`, `engine_capacity` and `number_of_photos` need transforming to generate a better result in the modeling. One possibility is to add a twice degree polynomial in `year_produced`, a sin transformation in `engine_capacity` and a twice degree polynomial in `number_of_photos` to the regression equation.
+
+
+```{r}
+fit2 <- lm(price_normal ~ odometer_value+poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df)
+summary(fit2)
+```
+
+
+### Interaction Terms
+Checking for interaction term between year_produced^2 *odometer_value. Removing color
+```{r}
+fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df)
+summary(fit3)
+plot(fit3,which=1)
+```
+
+
+Year_produced vs price
+```{r}
+plot(df$year_produced, df$price, main="Year_produced vs price")
+
+```
+Year_produced vs price
+```{r}
+plot(df$year_produced, df$price, main="Year_produced vs price", pch=19)
+
+```
+# Adding year_produced as polinomail of 2nd degree
+```{r}
+fit2 <- lm(price ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2), data = df)
+summary(fit2)
+#poly(year_produced,2)
+
+print(vif(fit2))
+```
+We can see a significant increase in adjusted R-squared and lower Residual standard error
+Note: Annova to be performed on all models
+
+```{r}
+plot(df$odometer_value, df$price, main="odometer_value vs price", pch=19)
+```
+Note: how to model 1/x^2 in lm
+
+```{r}
+fit3 <- lm(price ~ manufacturer_name+color+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)+(1/odometer_value), data = df)
+summary(fit2)
+#poly(year_produced,2)
+library(car)
+print(vif(fit1))
+```
+
+
+No effect of (1/odometer_value)
+
+
+
+
+
+Checking for interaction term between year_produced^2 *odometer_value. Removing color
+```{r}
+fit4 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)*odometer_value, data = df)
+summary(fit4)
+
+library(car)
+print(vif(fit4))
+```
+
+
+We observe a increase in the Adjusted R-squared
+
+
+
+Adding year_produced*number_of_photos
+```{r}
+fit5 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+state+up_counter+poly(year_produced,2)*odometer_value*number_of_photos, data = df)
+summary(fit5)
+
+library(car)
+print(vif(fit5))
+```
+Very high VIFs for the new interaction terms
+
+
+```{r}
+library(car)
+vifcor(fit5)
+```
+
+
 
