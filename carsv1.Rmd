@@ -59,8 +59,8 @@ df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
 df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
 "state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
-names(df)[names(df) == 'price_usd'] <- 'price'
 ```
+
 
 
 
@@ -294,6 +294,8 @@ The t-test was performed to verify the assumptions.
 summary(df$has_warranty)
 has = subset(df, has_warranty == "True")
 hasnot = subset(df, has_warranty == "False")
+has = subset(df, has_warranty == 1)
+hasnot = subset(df, has_warranty == 0)
 t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 ```
 
@@ -457,13 +459,26 @@ summary(reg.best10)
 ```
 
 
+```{r}
+# install.packages('party')
+library(party)
+cf1 <- cforest(price~. , data = df, control=cforest_unbiased(mtry=2,ntree=10))
+install.packages('relaimpo')
+library(relaimpo)
+lmMod <- lm(price~. , data = df, )  # fit lm() model
+relImportance <- calc.relimp(lmMod, type = "lmg", rela = TRUE) 
+```
 
 
 ```{r}
 library(caret)
 library(mlbench)
+
+
 test = df$price
 train = subset(df,select=-c(price,model_name,color,manufacturer_name))
+
+
 control <- rfeControl(functions=rfFuncs, method="cv", number=10)
 # run the RFE algorithm
 results <- rfe(train, test, rfeControl=control)
@@ -475,8 +490,6 @@ predictors(results)
 plot(results, type=c("g", "o"))
 ```
 
-<<<<<<< Updated upstream
-=======
 
 ## Data Transformation
 We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
@@ -488,46 +501,18 @@ fit0 = lm(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+
 summary(fit0)
 par(mfrow=c(1,2))
 plot(fit0,which=1)
-```
-
-
-```{r Preprocess}
-library(ezids)
-library(dplyr)
-library(ggplot2)
-df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
-
-df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
-"state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
-names(df)[names(df) == 'price_usd'] <- 'price'
-df <- df[complete.cases(df), ]
-
 cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
 power <- cal.box$x[cal.box$y==max(cal.box$y)]
 power
-price_normal = (df$price^power-1)/power
-data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
-df <- cbind(df,price_normal)
-```
-
-```{r}
-cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
-power <- cal.box$x[cal.box$y==max(cal.box$y)]
-power
-price_normal = (df$price^power-1)/power
-data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
-df <- cbind(df,price_normal)
 ```
 Looks like a transformation close to 0.22 might be useful. Another advantage of transforming the response could be that it may lead to a model that predicts positive result.
 ```{r}
-
 price_normal = (df$price^power-1)/power
 data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
 df <- cbind(df,price_normal)
 ```
 
 
->>>>>>> Stashed changes
 ## Models
 Taking all the features except model_name
 ```{r}
@@ -539,9 +524,48 @@ print(vif(fit1))
 ```
 
 
+### Polynomial Terms
+This has improved the fit but it will see whether changing some of the covariates can be helpful.
+The linearity assumption is checked by plots of residuals versus fitted values, plots of residuals versus explanatory variables, partial regression plots or gam plots. Here PatternSix apply the gam plot for our continuous variables to find the suitable transformation of the variables follow a linear model.
+The gam plots (one per explanatory variable) gives an idea which variables to transform: if the gam plot for a variable is straight, it suggests to leave that variable untransformed. If the plot for a particular variable is non-linear, the shape of the plot suggests the form of the transformation.
+
+```{r fig.align='center}
+library(mgcv)
+cal.gam <- gam(price_normal~s(odometer_value)+s(year_produced)+s(engine_capacity)+s(number_of_photos)+s(up_counter), data=df)
+
+summary(fit1)
+par(mfrow=c(2,3))
+plot(cal.gam)
+```
+These plots indicate that `odometer_value` and `up_counter` should remain untransformed (because the plot is relatively straight), but `year_produced`, `engine_capacity` and `number_of_photos` need transforming to generate a better result in the modeling. One possibility is to add a twice degree polynomial in `year_produced`, a sin transformation in `engine_capacity` and a twice degree polynomial in `number_of_photos` to the regression equation.
+
+
+```{r}
+fit2 <- lm(price_normal ~ odometer_value+poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df)
+summary(fit2)
+```
+
+
+### Interaction Terms
+Checking for interaction term between year_produced^2 *odometer_value. Removing color
+```{r}
+fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df)
+summary(fit3)
+plot(fit3,which=1)
+```
+
+
+Year_produced vs price
+```{r}
+plot(df$year_produced, df$price, main="Year_produced vs price")
+
+```
 Year_produced vs price
 ```{r}
 plot(df$year_produced, df$price, main="Year_produced vs price", pch=19)
+
 ```
 # Adding year_produced as polinomail of 2nd degree
 ```{r}
@@ -604,141 +628,51 @@ library(car)
 vifcor(fit5)
 ```
 
-```{r Preprocess}
-library(ezids)
-library(dplyr)
-library(ggplot2)
-library("glmnet")
-df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
 
-df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
-"state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
-names(df)[names(df) == 'price_usd'] <- 'price'
-df <- df[complete.cases(df), ]
+# y outlier check
+```{r studentized deleted residual}
+install.packages("olsrr")
+library(olsrr)
+ols_plot_resid_stud_fit(
+fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df), print_plot = TRUE)
+
 ```
+
+# x outlier check
+```{r cook's distance}
+plot(cooks.distance(
+fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df))) # replace model
+```
+
+Since all the distances are well below than the treshold 1, there is low likelihood of X outliers.
+
+# multicollinearity removal
+```{r partial least square}
+install.packages("pls")
+library(pls)
+library(tidyverse)
+df = df[, !(names(df) %in% c("price"))]
+df %>% select_if(is.numeric)->cars_numerical
+cars_numerical = scale(cars_numerical)
+df %>% select_if(negate(is.numeric))->cars_cat
+df = cbind(cars_numerical, cars_cat)
+
+
+
+pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV")
+summary(pls1, what = "all")
+```
+
+
+To solve the problem of multicollinearity, Pattern6 utilized partial least square method.According to Frank L.E. and Friedman (1993), compared to other methods like ridge regression and PCR, fewer assumptions need to be made, and yield better results. Cross validation was performed to calculate RMSEP. The comps  are Letent Factors and at most 97 components were utilized. At around 86 components, the RMSEP gets extreme small value. Thus 86 components is used to generate the final model.
 
 ```{r}
-cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
-power <- cal.box$x[cal.box$y==max(cal.box$y)]
-power
-price_normal = (df$price^power-1)/power
-data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
-df <- cbind(df,price_normal)
+
+
+pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV", jackknife = TRUE, ncomp = 86)
+coef(pls2)
 ```
-
-
-#REGULARIZATION
-##RIDGE
-
-```{r}
-library("ISLR")
-df_reg = uzscale(df, append=0, "price")
-```
-
-```{r}
-x=model.matrix(price~.,df_reg)[,-1]
-y=df_reg$price
-```
-
-```{r, warning=F}
-library("dplyr")
-set.seed(1)
-train = df_reg %>% sample_frac(0.75)
-test = df_reg %>% setdiff(train)
-
-x_train = model.matrix(price~., train)[,-1]
-x_test = model.matrix(price~., test)[,-1]
-
-y_train = train %>% select(price) %>% unlist() # %>% as.numeric()
-y_test = test %>% select(price) %>% unlist() # %>% as.numeric()
-
-```
-
-```{r}
-grid=10^seq(10,-2,length=100)
-ridge.mod=glmnet(x,y,alpha=0) 
-plot(ridge.mod)
-```
-
-### Using Grid search to find the optimal lambda value 
-```{r}
-set.seed(1)
-ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
-
-# Plot cross-validation results
-plot(ridge_cv)
-  
-# Best cross-validated lambda
-lambda_cv <- ridge_cv$lambda.min
-```
-
-
-```{r}
-# Fit final model, get its sum of squared
-# residuals and multiple R-squared
-model_cv <- glmnet(x_train,y_train, alpha = 0, lambda = lambda_cv,  standardize = TRUE)
-y_hat_cv <- predict(model_cv, x_test)
-ssr_cv <- t(y_test - y_hat_cv) %*% (y_test - y_hat_cv)
-
-#R-sqaured
-rsq_ridge_cv <- cor(y_test, y_hat_cv)^2
-rsq_ridge_cv
-
-#RMSE on test
-mse0 <- mean((y_test - y_hat_cv) ^ 2)
-sqrt(mse0)
-```
-
-
-
-##LASSO
-
-```{r}
-#library(psych)   
-  
-
-# Center y, X will be standardized in the modelling function
-
-lambdas_to_try <- 10^seq(-3, 5, length.out = 100)
-  
-# Perform 10-fold cross-validation to select lambda 
-# Setting alpha = 1 implements lasso regression
-lasso_cv <- cv.glmnet(x, y, alpha = 1,  nfolds = 10)
-  
-# Plot cross-validation results
-plot(lasso_cv)
-  
-# Best cross-validated lambda
-lambda_cv <- lasso_cv$lambda.min
-```
-
-```{r}  
-# Fit final model, get its sum of squared 
-# residuals and multiple R-squared
-model_cv <- glmnet(x, y, alpha = 1, lambda = lambda_cv, 
-                   standardize = TRUE)
-y_hat_cv <- predict(model_cv, x)
-ssr_cv <- t(y - y_hat_cv) %*% (y - y_hat_cv)
-rsq_lasso_cv <- cor(y, y_hat_cv)^2
-
-plot(model_cv, xvar = "lambda")
-legend("bottomright", lwd = 1, col = 1:6, legend = colnames(x_train), cex = .7)
-```
-
-```{r} 
-# The higher the lambda, the more the 
-# coefficients are shrinked towards zero.
-res <- glmnet(x, y, alpha = 1,
-              standardize = TRUE)
-plot(res, xvar = "lambda")
-legend("bottomright", lwd = 1, col = 1:6, 
-       legend = colnames(X), cex = .7)
-
-
-
-```
-
-```{r}
-rsq_lasso_cv
-```
-
