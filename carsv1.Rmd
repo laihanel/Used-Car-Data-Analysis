@@ -443,68 +443,67 @@ https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply
 ### Feautre selection
 #Not working
 ```{r}
-library("leaps")
+# library("leaps")
 
-reg.best10 <- regsubsets(price~. , data = df, nvmax = 10, nbest = 1, method = "backward", really.big=T)  
-
-# leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
-#The plot will show the Adjust R^2 when using the variables across the bottom
-plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
-plot(reg.best10, scale = "r2", main = "R^2")
-# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
-plot(reg.best10, scale = "bic", main = "BIC")
-plot(reg.best10, scale = "Cp", main = "Cp")
-summary(reg.best10)
+# reg.best10 <- regsubsets(price~. , data = df, nvmax = 10, nbest = 1, method = "backward", really.big=T)  
+# 
+# # leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
+# #The plot will show the Adjust R^2 when using the variables across the bottom
+# plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
+# plot(reg.best10, scale = "r2", main = "R^2")
+# # In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
+# plot(reg.best10, scale = "bic", main = "BIC")
+# plot(reg.best10, scale = "Cp", main = "Cp")
+# summary(reg.best10)
 
 ```
 
 
 ```{r}
 # install.packages('party')
-library(party)
-cf1 <- cforest(price~. , data = df, control=cforest_unbiased(mtry=2,ntree=10))
-install.packages('relaimpo')
-library(relaimpo)
-lmMod <- lm(price~. , data = df, )  # fit lm() model
-relImportance <- calc.relimp(lmMod, type = "lmg", rela = TRUE) 
+# library(party)
+# cf1 <- cforest(price~. , data = df, control=cforest_unbiased(mtry=2,ntree=10))
+# install.packages('relaimpo')
+# library(relaimpo)
+# lmMod <- lm(price~. , data = df, )  # fit lm() model
+# relImportance <- calc.relimp(lmMod, type = "lmg", rela = TRUE) 
 ```
 
 
 ```{r}
-library(caret)
-library(mlbench)
-
-
-test = df$price
-train = subset(df,select=-c(price,model_name,color,manufacturer_name))
-
-
-control <- rfeControl(functions=rfFuncs, method="cv", number=10)
-# run the RFE algorithm
-results <- rfe(train, test, rfeControl=control)
-# summarize the results
-print(results)
-# list the chosen features
-predictors(results)
-# plot the results
-plot(results, type=c("g", "o"))
+# library(caret)
+# library(mlbench)
+# 
+# 
+# test = df$price
+# train = subset(df,select=-c(price,model_name,color,manufacturer_name))
+# 
+# 
+# control <- rfeControl(functions=rfFuncs, method="cv", number=10)
+# # run the RFE algorithm
+# results <- rfe(train, test, rfeControl=control)
+# # summarize the results
+# print(results)
+# # list the chosen features
+# predictors(results)
+# # plot the results
+# plot(results, type=c("g", "o"))
 ```
 
 
 ## Data Transformation
 We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
 Let try the box-Cox transformation to normalize the target variable.
+
 ```{r}
 library(MASS)
-y = df$price
-fit0 = lm(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
-summary(fit0)
-par(mfrow=c(1,2))
-plot(fit0,which=1)
 cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
 power <- cal.box$x[cal.box$y==max(cal.box$y)]
 power
 ```
+
+
+
 Looks like a transformation close to 0.22 might be useful. Another advantage of transforming the response could be that it may lead to a model that predicts positive result.
 ```{r}
 price_normal = (df$price^power-1)/power
@@ -514,14 +513,17 @@ df <- cbind(df,price_normal)
 
 
 ## Models
+
 Taking all the features except model_name
 ```{r}
-fit1 <- lm(price ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
+y = df$price
+fit1 = lm(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
 summary(fit1)
-
+plot(fit1,which=1)
 library(car)
-print(vif(fit1))
+vif(fit1)
 ```
+
 
 
 ### Polynomial Terms
@@ -544,6 +546,7 @@ These plots indicate that `odometer_value` and `up_counter` should remain untran
 fit2 <- lm(price_normal ~ odometer_value+poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df)
 summary(fit2)
+plot(fit2,which=1)
 ```
 
 
@@ -623,12 +626,6 @@ print(vif(fit5))
 Very high VIFs for the new interaction terms
 
 
-```{r}
-library(car)
-vifcor(fit5)
-```
-
-
 # y outlier check
 ```{r studentized deleted residual}
 install.packages("olsrr")
@@ -676,3 +673,125 @@ pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capa
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV", jackknife = TRUE, ncomp = 86)
 coef(pls2)
 ```
+
+
+### REGULARIZATION
+#### RIDGE
+
+```{r}
+library("ISLR")
+df_reg = uzscale(df, append=0, "price")
+x=model.matrix(price~.,df_reg)[,-1]
+y=df_reg$price
+```
+
+
+```{r, warning=F}
+library("dplyr")
+set.seed(1)
+train = df_reg %>% sample_frac(0.75)
+test = df_reg %>% setdiff(train)
+
+x_train = model.matrix(price~., train)[,-1]
+x_test = model.matrix(price~., test)[,-1]
+
+y_train = train$price %>% unlist()
+y_test = test$price %>% unlist()
+
+```
+
+
+
+```{r}
+# y_train = train %>% select(price) %>% unlist() # %>% as.numeric()
+# y_test = test %>% select(price) %>% unlist() # %>% as.numeric()
+```
+
+
+```{r}
+grid=10^seq(10,-2,length=100)
+ridge.mod=glmnet(x_train,y_train,alpha=0,grid=grid) 
+plot(ridge.mod)
+```
+
+
+### Using Grid search to find the optimal lambda value 
+```{r}
+set.seed(1)
+ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
+
+# Plot cross-validation results
+plot(ridge_cv)
+  
+# Best cross-validated lambda
+lambda_cv <- ridge_cv$lambda.min
+
+```
+
+
+```{r}
+# Fit final model, get its sum of squared
+# residuals and multiple R-squared
+print("The value of lambda is for the lowest MSE is ")
+print(lambda_cv)
+
+model_cv <- glmnet(x_train,y_train, alpha = 0, lambda = lambda_cv,  standardize = TRUE)
+y_hat_cv <- predict(model_cv, x_test)
+ssr_cv <- t(y_test - y_hat_cv) %*% (y_test - y_hat_cv)
+
+#R-sqaured
+rsq_ridge_cv <- cor(y_test, y_hat_cv)^2
+rsq_ridge_cv
+
+#MSE on test
+mse0 <- mean((y_test - y_hat_cv) ^ 2)
+sqrt(mse0)
+
+print("R-sqaured")
+print(rsq_ridge_cv)
+print("MSE on test")
+print(mse0)
+```
+
+#### LASSO
+
+```{r}
+grid=10^seq(10,-2,length=100)
+lasso.mod=glmnet(x_train,y_train,alpha=1,grid=grid) 
+plot(lasso.mod)
+```
+
+
+```{r}
+# Center y, X will be standardized in the modelling function
+
+# lambdas_to_try <- 10^seq(-3, 5, length.out = 100)
+  
+# Perform 10-fold cross-validation to select lambda 
+# Setting alpha = 1 implements lasso regression
+lasso_cv <- cv.glmnet(x_train, y_train, alpha = 1,  nfolds = 10)
+  
+# Plot cross-validation results
+plot(lasso_cv)
+  
+# Best cross-validated lambda
+lambda_cv <- lasso_cv$lambda.min
+print("Best lambda")
+print(lambda_cv)
+```
+
+```{r}  
+# Fit final model, get its sum of squared 
+model_cv_lasso <- glmnet(x, y, alpha = 1, lambda = lambda_cv, standardize = TRUE)
+y_hat_cv <- predict(model_cv_lasso, x_test)
+ssr_cv <- t(y_test - y_hat_cv) %*% (y_test - y_hat_cv)
+rsq_lasso_cv <- cor(y_test, y_hat_cv)^2
+
+plot(model_cv_lasso, xvar = "lambda")
+
+print(ssr_cv)
+print(rsq_lasso_cv)
+```
+
+
+
