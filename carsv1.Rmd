@@ -625,22 +625,20 @@ print(vif(fit5))
 ```
 Very high VIFs for the new interaction terms
 
-
+When the regression model passed either t test or F test, the only thing confirmed is the linear relationship between x and y is significant, or the regression model is valid. It does not gurantee the fit is good enough and we cannot rule out data unreliability due to other unknown factors, like outliers. 
 # y outlier check
 ```{r studentized deleted residual}
 install.packages("olsrr")
 library(olsrr)
-ols_plot_resid_stud_fit(
-fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df), print_plot = TRUE)
-
+ols_plot_resid_stud_fit(fit3, print_plot = TRUE)
 ```
+
+
 
 # x outlier check
 ```{r cook's distance}
 plot(cooks.distance(
-fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df))) # replace model
+fit3)) # replace model
 ```
 
 Since all the distances are well below than the treshold 1, there is low likelihood of X outliers.
@@ -658,9 +656,16 @@ df = cbind(cars_numerical, cars_cat)
 
 
 
-pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV")
+pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV")
 summary(pls1, what = "all")
+
+pls.RMSEP = RMSEP(pls1, estimate="CV")
+plot(pls.RMSEP, main="RMSEP PLS Price", xlab="components")
+min_comp = which.min(pls.RMSEP$val)
+min(pls.RMSEP$val)
+points(min_comp, min(pls.RMSEP$val), pch=1, col="red", cex=1.5)
+plot(pls1, ncomp = 88, line = TRUE)
+
 ```
 
 
@@ -670,8 +675,9 @@ To solve the problem of multicollinearity, Pattern6 utilized partial least squar
 
 
 pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV", jackknife = TRUE, ncomp = 86)
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, jackknife = TRUE, validation = "CV", ncomp = 88)
 coef(pls2)
+
 ```
 
 
