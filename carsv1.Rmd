@@ -294,8 +294,8 @@ The t-test was performed to verify the assumptions.
 summary(df$has_warranty)
 has = subset(df, has_warranty == "True")
 hasnot = subset(df, has_warranty == "False")
-has = subset(df, has_warranty == 1)
-hasnot = subset(df, has_warranty == 0)
+# has = subset(df, has_warranty == 1)
+# hasnot = subset(df, has_warranty == 0)
 t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 ```
 
@@ -531,7 +531,7 @@ This has improved the fit but it will see whether changing some of the covariate
 The linearity assumption is checked by plots of residuals versus fitted values, plots of residuals versus explanatory variables, partial regression plots or gam plots. Here PatternSix apply the gam plot for our continuous variables to find the suitable transformation of the variables follow a linear model.
 The gam plots (one per explanatory variable) gives an idea which variables to transform: if the gam plot for a variable is straight, it suggests to leave that variable untransformed. If the plot for a particular variable is non-linear, the shape of the plot suggests the form of the transformation.
 
-```{r fig.align='center}
+```{r fig.align='center'}
 library(mgcv)
 cal.gam <- gam(price_normal~s(odometer_value)+s(year_produced)+s(engine_capacity)+s(number_of_photos)+s(up_counter), data=df)
 
@@ -626,17 +626,19 @@ print(vif(fit5))
 Very high VIFs for the new interaction terms
 
 When the regression model passed either t test or F test, the only thing confirmed is the linear relationship between x and y is significant, or the regression model is valid. It does not gurantee the fit is good enough and we cannot rule out data unreliability due to other unknown factors, like outliers. 
+
 # y outlier check
 ```{r studentized deleted residual}
-install.packages("olsrr")
+# install.packages("olsrr")
 library(olsrr)
 ols_plot_resid_stud_fit(fit3, print_plot = TRUE)
 ```
 
 
 
+
 # x outlier check
-```{r cook's distance}
+```{r cooks distance}
 plot(cooks.distance(
 fit3)) # replace model
 ```
@@ -645,18 +647,18 @@ Since all the distances are well below than the treshold 1, there is low likelih
 
 # multicollinearity removal
 ```{r partial least square}
-install.packages("pls")
+# install.packages("pls")
 library(pls)
 library(tidyverse)
-df = df[, !(names(df) %in% c("price"))]
-df %>% select_if(is.numeric)->cars_numerical
+df_mul = df[, !(names(df) %in% c("price"))]
+df_mul %>% select_if(is.numeric)->cars_numerical
 cars_numerical = scale(cars_numerical)
-df %>% select_if(negate(is.numeric))->cars_cat
-df = cbind(cars_numerical, cars_cat)
+df_mul %>% select_if(negate(is.numeric))->cars_cat
+df3 = cbind(cars_numerical, cars_cat)
 
 
 
-pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, validation = "CV")
+pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df3, validation = "CV")
 summary(pls1, what = "all")
 
 pls.RMSEP = RMSEP(pls1, estimate="CV")
@@ -673,9 +675,8 @@ To solve the problem of multicollinearity, Pattern6 utilized partial least squar
 
 ```{r}
 
-
 pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df, jackknife = TRUE, validation = "CV", ncomp = 88)
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df3, jackknife = TRUE, validation = "CV", ncomp = 88)
 coef(pls2)
 
 ```
@@ -686,9 +687,9 @@ coef(pls2)
 
 ```{r}
 library("ISLR")
-df_reg = uzscale(df, append=0, "price")
-x=model.matrix(price~.,df_reg)[,-1]
-y=df_reg$price
+df_reg = uzscale(df, append=0, "price_normal")
+x=model.matrix(price_normal~.,df_reg)[,-1]
+y=df_reg$price_normal
 ```
 
 
@@ -698,11 +699,11 @@ set.seed(1)
 train = df_reg %>% sample_frac(0.75)
 test = df_reg %>% setdiff(train)
 
-x_train = model.matrix(price~., train)[,-1]
-x_test = model.matrix(price~., test)[,-1]
+x_train = model.matrix(price_normal~., train)[,-1]
+x_test = model.matrix(price_normal~., test)[,-1]
 
-y_train = train$price %>% unlist()
-y_test = test$price %>% unlist()
+y_train = train$price_normal %>% unlist()
+y_test = test$price_normal %>% unlist()
 
 ```
 
@@ -715,6 +716,7 @@ y_test = test$price %>% unlist()
 
 
 ```{r}
+library("glmnet")
 grid=10^seq(10,-2,length=100)
 ridge.mod=glmnet(x_train,y_train,alpha=0,grid=grid) 
 plot(ridge.mod)
@@ -722,20 +724,22 @@ plot(ridge.mod)
 
 
 ### Using Grid search to find the optimal lambda value 
-```{r}
-set.seed(1)
-ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
-
-# Plot cross-validation results
-plot(ridge_cv)
-  
-# Best cross-validated lambda
-lambda_cv <- ridge_cv$lambda.min
+```{r comment_this_when_compile_file}
+# set.seed(1)
+# ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
+# 
+# # Plot cross-validation results
+# plot(ridge_cv)
+#   
+# # Best cross-validated lambda
+# lambda_cv <- ridge_cv$lambda.min
 
 ```
 
 
 ```{r}
+# read the lambda value for cross-validation
+lambda_cv <- 0.581
 # Fit final model, get its sum of squared
 # residuals and multiple R-squared
 print("The value of lambda is for the lowest MSE is ")
@@ -768,25 +772,27 @@ plot(lasso.mod)
 ```
 
 
-```{r}
-# Center y, X will be standardized in the modelling function
-
-# lambdas_to_try <- 10^seq(-3, 5, length.out = 100)
-  
-# Perform 10-fold cross-validation to select lambda 
-# Setting alpha = 1 implements lasso regression
-lasso_cv <- cv.glmnet(x_train, y_train, alpha = 1,  nfolds = 10)
-  
-# Plot cross-validation results
-plot(lasso_cv)
-  
-# Best cross-validated lambda
-lambda_cv <- lasso_cv$lambda.min
-print("Best lambda")
-print(lambda_cv)
+```{r comment_this_when_compile_file}
+# # Center y, X will be standardized in the modelling function
+# 
+# # lambdas_to_try <- 10^seq(-3, 5, length.out = 100)
+#   
+# # Perform 10-fold cross-validation to select lambda 
+# # Setting alpha = 1 implements lasso regression
+# lasso_cv <- cv.glmnet(x_train, y_train, alpha = 1,  nfolds = 10)
+#   
+# # Plot cross-validation results
+# plot(lasso_cv)
+#   
+# # Best cross-validated lambda
+# lambda_cv <- lasso_cv$lambda.min
+# print("Best lambda")
+# print(lambda_cv)
 ```
 
 ```{r}  
+# read the lambda value for cross-validation
+lambda_cv <- 0.00374
 # Fit final model, get its sum of squared 
 model_cv_lasso <- glmnet(x, y, alpha = 1, lambda = lambda_cv, standardize = TRUE)
 y_hat_cv <- predict(model_cv_lasso, x_test)
@@ -799,5 +805,8 @@ print(ssr_cv)
 print(rsq_lasso_cv)
 ```
 
+# Model Selection
+```{r}
 
-
+# aov(fit2, fit3, pls2, model_cv, model_cv_lasso)
+```
