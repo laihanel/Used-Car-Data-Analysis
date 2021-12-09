@@ -697,8 +697,7 @@ To solve the problem of multicollinearity, Pattern6 utilized partial least squar
 
 ```{r}
 
-pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df3, jackknife = TRUE, validation = "CV", ncomp = 88)
+pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df3, jackknife = TRUE, validation = "CV", ncomp = 88)
 coef(pls2)
 
 ```
@@ -746,6 +745,7 @@ plot(ridge.mod)
 
 
 ### Using Grid search to find the optimal lambda value 
+
 ```{r }
 # set.seed(1)
 # ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
@@ -829,6 +829,13 @@ print(rsq_lasso_cv)
 
 # Model Selection
 ```{r}
+Aasish_Wanted = data.frame(manufacturer_name ='Audi', model_name='A6', transmission='automatic', color='white', odometer_value = 4600, year_produced = 2015, engine_fuel='gasoline', engine_has_gas='False', engine_type = 'gasoline', engine_capacity=3.0, body_type = 'universal', has_warranty='False', state= 'owned', drivetrain='all', is_exchangeable='False', number_of_photos = 10, up_counter = 14)
 
-# aov(fit2, fit3, pls2, model_cv, model_cv_lasso)
+pls2.pred = predict(fit3, Aasish_Wanted, type='response')
+pls2.pred
+# plot(testY, pls2.pred, ylim=c(-11,2), xlim=c(-11,2),main="Test Dataset", xlab="observed", ylab="PLS Predicted")
+# abline(0, 1, col="red")
+# pls.eval=data.frame(obs=solTestY, pred=pls.pred2[,1,1])
+# defaultSummary(pls.eval)
+
 ```
