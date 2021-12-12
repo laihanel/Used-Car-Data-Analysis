@@ -4,17 +4,39 @@ author: "Team PatternSix"
 date: "11/9/2021"
 # date: "`r Sys.Date()`"
 output:
-  html_document:
-    theme: cerulean
+  rmdformats::readthedown:
     code_folding: hide
-    number_sections: false
-    toc: yes
-    toc_depth: 3
-    toc_float: yes
-  pdf_document:
-    toc: yes
-    toc_depth: '3'
+    highlight: pygments
 ---
+
+<style type="text/css">
+p{ /* Normal  */
+   font-size: 18px;
+}
+body{ /* Normal  */
+   font-size: 18px;
+}
+td {  /* Table  */
+   font-size: 14px;
+}
+h1 { /* Header 1 */
+ font-size: 32px;
+}
+h2 { /* Header 2 */
+ font-size: 26px;
+}
+h3 { /* Header 3 */
+ font-size: 22px;
+}
+code.r{ /* Code block */
+  font-size: 14px;
+}
+pre { /* Code block */
+  font-size: 14px
+}
+</style>
+---
+
 
 ```{r init, include=FALSE}
 # some of common options (and the defaults) are: 
@@ -614,7 +636,6 @@ plot(pls1, ncomp = 88, line = TRUE)
 To solve the problem of multicollinearity, Pattern6 utilized partial least square method.According to Frank L.E. and Friedman (1993), compared to other methods like ridge regression and PCR, fewer assumptions need to be made, and yield better results. Cross validation was performed to calculate RMSEP. The comps  are Letent Factors and at most 97 components were utilized. At around 86 components, the RMSEP gets extreme small value. Thus 86 components is used to generate the final model.
 
 ```{r}
-
 pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data             = df_normal, jackknife = TRUE, validation = "CV", ncomp = 88)
 coef(pls2)
@@ -712,7 +733,8 @@ plot(lasso.mod)
 ```
 
 
-```{r}
+
+```{r }
 # # Center y, X will be standardized in the modelling function
 # 
 # # lambdas_to_try <- 10^seq(-3, 5, length.out = 100)
@@ -747,6 +769,13 @@ print(rsq_lasso_cv)
 
 # Model Selection
 ```{r}
+Aasish_Wanted = data.frame(manufacturer_name ='Audi', model_name='A6', transmission='automatic', color='white', odometer_value = 4600, year_produced = 2015, engine_fuel='gasoline', engine_has_gas='False', engine_type = 'gasoline', engine_capacity=3.0, body_type = 'universal', has_warranty='False', state= 'owned', drivetrain='all', is_exchangeable='False', number_of_photos = 10, up_counter = 14)
 
-# aov(fit2, fit3, pls2, model_cv, model_cv_lasso)
+pls2.pred = predict(fit3, Aasish_Wanted, type='response')
+pls2.pred
+# plot(testY, pls2.pred, ylim=c(-11,2), xlim=c(-11,2),main="Test Dataset", xlab="observed", ylab="PLS Predicted")
+# abline(0, 1, col="red")
+# pls.eval=data.frame(obs=solTestY, pred=pls.pred2[,1,1])
+# defaultSummary(pls.eval)
+
 ```
