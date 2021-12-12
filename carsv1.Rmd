@@ -20,7 +20,16 @@ output:
 # some of common options (and the defaults) are: 
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
-knitr::opts_chunk$set(warning = F, results = "markup", message = F, comment = NA)
+library(corrplot)
+library(tidyverse)
+library(fBasics)
+library(gridExtra)
+library(ggplot2)
+library(MASS)
+library(mgcv)
+library(olsrr)
+library(pls)
+knitr::opts_chunk$set(warning = F, message = F, comment = NA, tidy = TRUE)
 # knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 # options(scipen=9, digits = 3) 
@@ -29,9 +38,9 @@ options(scientific=T, digits = 3)
 ```
 
 ## Why Used Car Market in Belarus?
-As it is widely known, for the last  year and a half the world has been dealing with an unprecedented event; the corona virus pandemic. While this affected many areas of people’s lives, one thing that many did not talk about was its effects on the global supply chain. People stocked up early on during the pandemic, fearing a potential scarcity in finding some of the most commonly available consumer items.  For example, hygienic wipes was one of the most popular scarce items for many months,  most large market chains, CVS-target-Safeway, limited people from buying more than one swipe at once. 
+As it is widely known, for the last  year and a half the world has been dealing with an unprecedented event: the corona virus pandemic. While this affected many areas of people’s lives, one thing that many did not talk about was its effects on the global supply chain. People stocked up early on during the pandemic, fearing a potential scarcity in finding some of the most commonly available consumer items. For example, hygienic wipes was one of the most popular scarce items for many months,  most large market chains, CVS-target-Safeway, limited people from buying more than one swipe at once. 
 	
-While the world is recovering from this once in a hundred years phenomena, car market was also hit by the sudden changes. In many countries around the world, it is very hard to find first hand cars (Isidore, 2021)  and because of that reason more and more people are looking to the used car market. For this reason Team PatternSix found it fit to take a deep dive in to the used car market and help potential buyers/sellers to get the best prices for the specific features that they are looking for. 
+While the world is recovering from this once in a hundred years phenomena, car market was also hit by the sudden changes. In many countries around the world, it is very hard to find first hand cars (Isidore, 2021)  and because of that reason, more and more people are looking to the used car market. For this reason Team PatternSix found it fit to take a deep dive in to the used car market and help potential buyers/sellers to get the best prices for the specific features that they are looking for. 
 	
 As prospective data scientists, Team PatternSix wanted to take a recent issue at hand just like a true data scientist does and explain the findings using the best up to date data analysis and data visualization techniques. PatternSix found the Belarus Car Market data particularly interesting due to the fact that not only the data set had the necessary amount of multi-level variables but also because of the fact that the team saw that there was a story to tell to the common consumer.  
 
@@ -55,7 +64,7 @@ Considering that the Belarus used car data set was gathered from the web, this r
 
 ```{r cars, include=FALSE}
 
-df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE)
+df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE, comment.char = "")
 
 df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
 "state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
@@ -87,20 +96,17 @@ df <- df[complete.cases(df), ]
 ```
 
 
-```{r}
+```{r outliers check}
 outliers = boxplot(df$price, plot=FALSE)$out
 length(outliers)
 # df2<- df[which(df$price %in% outliers),]
 ```
-There are `length(outliers)` outliers for price in this data set. These data will not be eliminated since they also reflect the actual situation in the used car market. They represent the group that contain relatively new cars with higher prices.
+There are `r length(outliers)` outliers for price in this data set. These data will not be eliminated since they also reflect the actual situation in the used car market. They represent the group that contain relatively new cars with higher prices.
 
 
 ## Summary of Dataset
-```{r include=FALSE}
-library(corrplot)
-library(tidyverse)
-
-df %>% select_if(is.numeric)->cars_numerical
+```{r subset-numerical, include=FALSE}
+df %>% select_if(is.numeric)->df_numerical
 ```
 
 
@@ -151,11 +157,10 @@ The following are the SMART questions which PatternSix came up with and followed
 
 
 ## Exploratory Data Analysis
-```{r echo=TRUE}
+```{r EDA}
 # summary(cars_numerical)
-library(fBasics) 
 options(width = 300 )
-basicStats(cars_numerical)
+xkabledply(basicStats(df_numerical))
 ```
 
 The table above gives the basic statistic measures of numeric data. There are six numerical variables in the dataset. The one that is most important is the used car's price. It has mean=6640, standard deviation(sd)=6430. The odometer_value with mean=249000, sd=136000. The year_produced with mean=2000 and sd=8.06. The engine_capacity has mean=2.06 and sd=0.67. The absolute values of skewness for all the variables are all greater than 1, which indicates they are highly skewed. The kurtosis values are all greater than 0, indicating they are sharply peaked with heavy tails. More analysis between other variables is shown below.
@@ -164,32 +169,31 @@ The table above gives the basic statistic measures of numeric data. There are si
 
 This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and Belarus used car market data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
 
-```{r, fig.height=3}
-library(gridExtra)
-plot1 = ggplot(cars_numerical, aes(sample = price)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of price') 
-plot2 = ggplot(cars_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of price')
+```{r, dependent-variable-normality-check, fig.height=3}
+plot1 = ggplot(df_numerical, aes(sample = price)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of price') 
+plot2 = ggplot(df_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of price')
 
 grid.arrange(plot1, plot2, ncol=2, nrow=1)
 ```
 
 As it could be found in the quantile-quantile plot and the histogram,`price` are not normally distributed, if PatternSix wants to use the price as the dependent variable for a linear regression, it is necessary to transform it to a normal distribution after that.
 
-```{r}
-plot3 = ggplot(cars_numerical, aes(sample = odometer_value)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
-plot4 = ggplot(cars_numerical, aes(x = odometer_value)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of odometer_value')
+```{r independent-variable-set-1-normality-check}
+plot3 = ggplot(df_numerical, aes(sample = odometer_value)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of odometer_value')
+plot4 = ggplot(df_numerical, aes(x = odometer_value)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of odometer_value')
 
-plot5 = ggplot(cars_numerical, aes(sample = year_produced)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of year_produced')
-plot6 = ggplot(cars_numerical, aes(x = year_produced)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of year_produced')
+plot5 = ggplot(df_numerical, aes(sample = year_produced)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of year_produced')
+plot6 = ggplot(df_numerical, aes(x = year_produced)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of year_produced')
 
 grid.arrange(plot3, plot4, plot5, plot6, ncol=2, nrow=2)
 ```
 
-```{r}
-plot7 = ggplot(cars_numerical, aes(sample = engine_capacity)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of engine_capacity')
-plot8 = ggplot(cars_numerical, aes(x = engine_capacity)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of engine_capacity')
+```{r independent-variable-set-2-normality-check}
+plot7 = ggplot(df_numerical, aes(sample = engine_capacity)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of engine_capacity')
+plot8 = ggplot(df_numerical, aes(x = engine_capacity)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of engine_capacity')
 
-plot9 = ggplot(cars_numerical, aes(sample = number_of_photos)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of number_of_photos')
-plot10 = ggplot(cars_numerical, aes(x = number_of_photos)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of number_of_photos')
+plot9 = ggplot(df_numerical, aes(sample = number_of_photos)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of number_of_photos')
+plot10 = ggplot(df_numerical, aes(x = number_of_photos)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of number_of_photos')
 
 grid.arrange(plot7, plot8, plot9, plot10, ncol=2, nrow=2)
 ```
@@ -198,7 +202,7 @@ The Q-Q plots and histograms also show evidence of non-normality. The `odometer_
 
 Now let's apply *Kolmogorov-Smirnov normality test* into the data. The null hypothesis of this test is 'sample distribution is normal'.
 
-```{r, warning=FALSE}
+```{r, Kolmogorov-Smirnov-normality-test, warning=FALSE}
 ks.test(df$price, 'pnorm', mean=mean(df$price), sd=sd(df$price))
 ks.test(df$odometer_value, 'pnorm', mean=mean(df$odometer_value), sd=sd(df$odometer_value))
 ks.test(df$year_produced, 'pnorm', mean=mean(df$year_produced), sd=sd(df$year_produced))
@@ -221,7 +225,7 @@ Our sample size for this data is 38521. Based on the central limit theorem, the 
 ### Correlation Plot
 
 ```{r Fig 1}
-corrplot(cor(cars_numerical), method = 'number')
+corrplot(cor(df_numerical), method = 'number')
 ```
 
 Figure 1 shows the correlation between the numerical features.
@@ -230,7 +234,6 @@ The team used a correlation plot for checking the correlation between continuous
 
 
 ```{r Fig. 2}
-library(ggplot2)
 
 df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year', x="year produced", y = "mean price per year") + theme(plot.title = element_text(hjust = 0.5))
 ```
@@ -249,9 +252,9 @@ The team observed a positive linear trend between the mean price per engine capa
 
 
 
-```{r}
+```{r Tbl. 1}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
-cor(df4)
+xkabledply(cor(df4))
 #corrplot(cor(cars_numerical), method = 'number')
 ```
 
@@ -259,13 +262,13 @@ The observed correlation coefficient equals 0.6. However, in Figure 1 it was obs
 
 
 
-```{r Fig 4}
+```{r Tbl. 2}
 df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
-cor(df4)
+xkabledply(cor(df4))
 #corrplot(cor(cars_numerical), method = 'number')
 ```
 
-```{r}
+```{r Fig. 4}
 df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -282,7 +285,7 @@ When there are two samples drawn from the same population and the goal is to tes
 PatternSix tested some of the features against prices respectively since price is going to be the dependent variable. First one the team looked at is whether cars had warranties versus different average prices. A box-plot would help show the relationship between these two.
 
 
-```{r}
+```{r Fig. 5}
 df %>% ggplot(aes(has_warranty, price, fill=has_warranty)) + geom_boxplot() + ggtitle('Has_Warranty vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -290,7 +293,7 @@ From the graph, one could see that the average prices differ significantly betwe
 
 The t-test was performed to verify the assumptions.
 
-```{r T test, echo=TRUE}
+```{r T-test-1}
 summary(df$has_warranty)
 has = subset(df, has_warranty == "True")
 hasnot = subset(df, has_warranty == "False")
@@ -306,14 +309,14 @@ PatternSix subset the prices for cars based on whether they have warranties. The
 
 Next, lets take a look at whether different engine types have different average prices. same as above, PatternSix drew a box-plot to get a visual idea.
 
-```{r}
+```{r Fig. 6}
 df %>% ggplot(aes(engine_type, price,fill=engine_type)) + geom_boxplot()+ ggtitle('Engine_type vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
 This time, from the graph, PatternSix could not get a conclusion right away. That is why it is crucial to perform the formal test.
 
 
-```{r echo=TRUE}
+```{r T-test-2}
 summary(df$engine_type)
 diesel = subset(df, subset = df$engine_type == "diesel")
 gas = subset(df, subset = df$engine_type == "gasoline")
@@ -332,7 +335,7 @@ In the data set, not only do there are numerical variables,but there are also ca
 For categorical variables, data set does not fit the requirements for goodness of fit test but the data has to be tested for co-linearity between categorical variables for variable selection in model building. Test of Independence thus is performed. 
 
 
-```{r}
+```{r chi-square}
 contgcTbl1 = table(df$manufacturer_name, df$has_warranty)
 
 (Xsq1 = chisq.test(contgcTbl1))
@@ -371,17 +374,17 @@ Due to the fact that there are numerous independent variables to test on, in ord
 Same as above, a graph would give the observer an overview of relationships against prices.
 
 #### Colors by Mean Price
-```{r}
+```{r Fig. 7}
 df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB") + labs(x='Color',y='Price mean') + ggtitle('Color vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
 #### Body Types by Mean Price
-```{r}
+```{r Fig. 8}
 df %>% group_by(body_type) %>% summarise(body_price_mean = mean(price))%>% ggplot(aes(x = reorder(body_type, -body_price_mean),body_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Body Type', y='Mean of price') + ggtitle('Body Type vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
 #### Top 10 Manufacturers by Mean Price
-```{r}
+```{r Fig. 9}
 df2 = df %>% group_by(manufacturer_name) %>% summarise(manuf_price_mean = mean(price)) %>% arrange(desc(manuf_price_mean)) 
 df2 %>% slice(1:10) %>%  ggplot(aes(x = reorder(manufacturer_name, -manuf_price_mean),manuf_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Manufacturer', y='Mean of price')  + ggtitle('Manufacturer vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
@@ -392,7 +395,7 @@ It could be seen that average price differences are all significant between grou
 
 
 #### One Way ANOVA
-```{r}
+```{r ANOVA}
 df_aov_1 = aov(price ~  color , df)
 summary(df_aov_1)
 
@@ -440,88 +443,34 @@ Isidore, C. (2021, September 28). Retrieved from CNN Business:
 https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
 
 
-### Feautre selection
-#Not working
-```{r}
-# library("leaps")
-
-# reg.best10 <- regsubsets(price~. , data = df, nvmax = 10, nbest = 1, method = "backward", really.big=T)  
-# 
-# # leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
-# #The plot will show the Adjust R^2 when using the variables across the bottom
-# plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
-# plot(reg.best10, scale = "r2", main = "R^2")
-# # In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
-# plot(reg.best10, scale = "bic", main = "BIC")
-# plot(reg.best10, scale = "Cp", main = "Cp")
-# summary(reg.best10)
-
-```
-
-
-```{r}
-# install.packages('party')
-# library(party)
-# cf1 <- cforest(price~. , data = df, control=cforest_unbiased(mtry=2,ntree=10))
-# install.packages('relaimpo')
-# library(relaimpo)
-# lmMod <- lm(price~. , data = df, )  # fit lm() model
-# relImportance <- calc.relimp(lmMod, type = "lmg", rela = TRUE) 
-```
-
-
-```{r}
-# library(caret)
-# library(mlbench)
-# 
-# 
-# test = df$price
-# train = subset(df,select=-c(price,model_name,color,manufacturer_name))
-# 
-# 
-# control <- rfeControl(functions=rfFuncs, method="cv", number=10)
-# # run the RFE algorithm
-# results <- rfe(train, test, rfeControl=control)
-# # summarize the results
-# print(results)
-# # list the chosen features
-# predictors(results)
-# # plot the results
-# plot(results, type=c("g", "o"))
-```
-
 
 ## Data Transformation
-We can observe that the target variable is nor normally distributed which is an assumption of the linear regression model
+We can observe that the target variable is not normally distributed which is an assumption of the linear regression model
 Let try the box-Cox transformation to normalize the target variable.
 
-```{r}
-library(MASS)
+```{r dependent-variable-transformation-parameter-finding}
 cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
-power <- cal.box$x[cal.box$y==max(cal.box$y)]
-power
+(power <- cal.box$x[cal.box$y==max(cal.box$y)])
 ```
 
 
 
 Looks like a transformation close to 0.22 might be useful. Another advantage of transforming the response could be that it may lead to a model that predicts positive result.
-```{r}
+```{r dependent-variable-transformation}
 price_normal = (df$price^power-1)/power
 data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
-df <- cbind(df,price_normal)
+df_normal <- cbind(subset(df, select = -price), price_normal)
 ```
 
 
 ## Models
 
 Taking all the features except model_name
-```{r}
+```{r base-model}
 y = df$price
-fit1 = lm(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
+fit1 = lm(price_normal ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df_normal)
 summary(fit1)
 plot(fit1,which=1)
-library(car)
-vif(fit1)
 ```
 
 
@@ -529,22 +478,22 @@ vif(fit1)
 ### Polynomial Terms
 This has improved the fit but it will see whether changing some of the covariates can be helpful.
 The linearity assumption is checked by plots of residuals versus fitted values, plots of residuals versus explanatory variables, partial regression plots or gam plots. Here PatternSix apply the gam plot for our continuous variables to find the suitable transformation of the variables follow a linear model.
+
 The gam plots (one per explanatory variable) gives an idea which variables to transform: if the gam plot for a variable is straight, it suggests to leave that variable untransformed. If the plot for a particular variable is non-linear, the shape of the plot suggests the form of the transformation.
 
-```{r fig.align='center'}
-library(mgcv)
-cal.gam <- gam(price_normal~s(odometer_value)+s(year_produced)+s(engine_capacity)+s(number_of_photos)+s(up_counter), data=df)
+```{r polynomial-term-check, fig.align='center'}
+cal.gam <- gam(price_normal~s(odometer_value)+s(year_produced)+s(engine_capacity)+s(number_of_photos)+s(up_counter), data=df_normal)
 
 summary(fit1)
 par(mfrow=c(2,3))
 plot(cal.gam)
 ```
-These plots indicate that `odometer_value` and `up_counter` should remain untransformed (because the plot is relatively straight), but `year_produced`, `engine_capacity` and `number_of_photos` need transforming to generate a better result in the modeling. One possibility is to add a twice degree polynomial in `year_produced`, a sin transformation in `engine_capacity` and a twice degree polynomial in `number_of_photos` to the regression equation.
+These plots indicate that `odometer_value` and `up_counter` should remain untransformed (because the plot is relatively straight), but `year_produced`, `engine_capacity` and `number_of_photos` need transforming to generate a better result in the modeling. One possibility is to add a degree of two polynomial in `year_produced`, a sin transformation in `engine_capacity` and a degree of two polynomial in `number_of_photos` to the regression equation.
 
 
-```{r}
+```{r add-polynomial-terms}
 fit2 <- lm(price_normal ~ odometer_value+poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df)
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
 summary(fit2)
 plot(fit2,which=1)
 ```
@@ -554,83 +503,83 @@ plot(fit2,which=1)
 Checking for interaction term between year_produced^2 *odometer_value. Removing color
 ```{r}
 fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df)
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
 summary(fit3)
 plot(fit3,which=1)
+xkablevif(fit3)
 ```
 
 
-Year_produced vs price
-```{r}
-plot(df$year_produced, df$price, main="Year_produced vs price")
+<!-- Year_produced vs price -->
+<!-- ```{r} -->
+<!-- plot(df$year_produced, df$price, main="Year_produced vs price") -->
 
-```
-Year_produced vs price
-```{r}
-plot(df$year_produced, df$price, main="Year_produced vs price", pch=19)
+<!-- ``` -->
+<!-- Year_produced vs price -->
+<!-- ```{r} -->
+<!-- plot(df$year_produced, df$price, main="Year_produced vs price", pch=19) -->
 
-```
-# Adding year_produced as polinomail of 2nd degree
-```{r}
-fit2 <- lm(price ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2), data = df)
-summary(fit2)
-#poly(year_produced,2)
+<!-- ``` -->
+<!-- # Adding year_produced as polinomail of 2nd degree -->
+<!-- ```{r} -->
+<!-- fit2 <- lm(price ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2), data = df) -->
+<!-- summary(fit2) -->
+<!-- #poly(year_produced,2) -->
 
-print(vif(fit2))
-```
-We can see a significant increase in adjusted R-squared and lower Residual standard error
-Note: Annova to be performed on all models
+<!-- print(vif(fit2)) -->
+<!-- ``` -->
+<!-- We can see a significant increase in adjusted R-squared and lower Residual standard error -->
+<!-- Note: Annova to be performed on all models -->
 
-```{r}
-plot(df$odometer_value, df$price, main="odometer_value vs price", pch=19)
-```
-Note: how to model 1/x^2 in lm
+<!-- ```{r} -->
+<!-- plot(df$odometer_value, df$price, main="odometer_value vs price", pch=19) -->
+<!-- ``` -->
+<!-- Note: how to model 1/x^2 in lm -->
 
-```{r}
-fit3 <- lm(price ~ manufacturer_name+color+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)+(1/odometer_value), data = df)
-summary(fit2)
-#poly(year_produced,2)
-library(car)
-print(vif(fit1))
-```
-
-
-No effect of (1/odometer_value)
+<!-- ```{r} -->
+<!-- fit3 <- lm(price ~ manufacturer_name+color+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)+(1/odometer_value), data = df) -->
+<!-- summary(fit2) -->
+<!-- #poly(year_produced,2) -->
+<!-- library(car) -->
+<!-- print(vif(fit1)) -->
+<!-- ``` -->
 
 
+<!-- No effect of (1/odometer_value) -->
 
 
 
-Checking for interaction term between year_produced^2 *odometer_value. Removing color
-```{r}
-fit4 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)*odometer_value, data = df)
-summary(fit4)
-
-library(car)
-print(vif(fit4))
-```
 
 
-We observe a increase in the Adjusted R-squared
+<!-- Checking for interaction term between year_produced^2 *odometer_value. Removing color -->
+<!-- ```{r} -->
+<!-- fit4 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)*odometer_value, data = df) -->
+<!-- summary(fit4) -->
+
+<!-- library(car) -->
+<!-- print(vif(fit4)) -->
+<!-- ``` -->
+
+
+<!-- We observe a increase in the Adjusted R-squared -->
 
 
 
-Adding year_produced*number_of_photos
-```{r}
-fit5 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+state+up_counter+poly(year_produced,2)*odometer_value*number_of_photos, data = df)
-summary(fit5)
+<!-- Adding year_produced*number_of_photos -->
+<!-- ```{r} -->
+<!-- fit5 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+state+up_counter+poly(year_produced,2)*odometer_value*number_of_photos, data = df) -->
+<!-- summary(fit5) -->
 
-library(car)
-print(vif(fit5))
-```
-Very high VIFs for the new interaction terms
+<!-- library(car) -->
+<!-- print(vif(fit5)) -->
+<!-- ``` -->
+<!-- Very high VIFs for the new interaction terms -->
 
-When the regression model passed either t test or F test, the only thing confirmed is the linear relationship between x and y is significant, or the regression model is valid. It does not gurantee the fit is good enough and we cannot rule out data unreliability due to other unknown factors, like outliers. 
+<!-- When the regression model passed either t test or F test, the only thing confirmed is the linear relationship between x and y is significant, or the regression model is valid. It does not gurantee the fit is good enough and we cannot rule out data unreliability due to other unknown factors, like outliers.  -->
 
 # y outlier check
 ```{r studentized deleted residual}
 # install.packages("olsrr")
-library(olsrr)
 ols_plot_resid_stud_fit(fit3, print_plot = TRUE)
 ```
 
@@ -647,18 +596,9 @@ Since all the distances are well below than the treshold 1, there is low likelih
 
 # multicollinearity removal
 ```{r partial least square}
-# install.packages("pls")
-library(pls)
-library(tidyverse)
-df_mul = df[, !(names(df) %in% c("price"))]
-df_mul %>% select_if(is.numeric)->cars_numerical
-cars_numerical = scale(cars_numerical)
-df_mul %>% select_if(negate(is.numeric))->cars_cat
-df3 = cbind(cars_numerical, cars_cat)
 
 
-
-pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df3, validation = "CV")
+pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos,                                 2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeabl            e+state, data = df_normal, validation = "CV")
 summary(pls1, what = "all")
 
 pls.RMSEP = RMSEP(pls1, estimate="CV")
@@ -676,7 +616,7 @@ To solve the problem of multicollinearity, Pattern6 utilized partial least squar
 ```{r}
 
 pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data = df3, jackknife = TRUE, validation = "CV", ncomp = 88)
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data             = df_normal, jackknife = TRUE, validation = "CV", ncomp = 88)
 coef(pls2)
 
 ```
@@ -687,7 +627,7 @@ coef(pls2)
 
 ```{r}
 library("ISLR")
-df_reg = uzscale(df, append=0, "price_normal")
+df_reg = uzscale(df_normal, append=0, "price_normal")
 x=model.matrix(price_normal~.,df_reg)[,-1]
 y=df_reg$price_normal
 ```
@@ -724,7 +664,7 @@ plot(ridge.mod)
 
 
 ### Using Grid search to find the optimal lambda value 
-```{r comment_this_when_compile_file}
+```{r}
 # set.seed(1)
 # ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
 # 
@@ -772,7 +712,7 @@ plot(lasso.mod)
 ```
 
 
-```{r comment_this_when_compile_file}
+```{r}
 # # Center y, X will be standardized in the modelling function
 # 
 # # lambdas_to_try <- 10^seq(-3, 5, length.out = 100)
