@@ -42,16 +42,7 @@ pre { /* Code block */
 # some of common options (and the defaults) are: 
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
-library(corrplot)
-library(tidyverse)
-library(fBasics)
-library(gridExtra)
-library(ggplot2)
-library(MASS)
-library(mgcv)
-library(olsrr)
-library(pls)
-knitr::opts_chunk$set(warning = F, message = F, comment = NA, tidy = TRUE)
+knitr::opts_chunk$set(warning = F, message = F, comment = NA)
 # knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 # options(scipen=9, digits = 3) 
@@ -128,6 +119,7 @@ There are `r length(outliers)` outliers for price in this data set. These data w
 
 ## Summary of Dataset
 ```{r subset-numerical, include=FALSE}
+library(dplyr)
 df %>% select_if(is.numeric)->df_numerical
 ```
 
@@ -181,6 +173,7 @@ The following are the SMART questions which PatternSix came up with and followed
 ## Exploratory Data Analysis
 ```{r EDA}
 # summary(cars_numerical)
+library(fBasics)
 options(width = 300 )
 xkabledply(basicStats(df_numerical))
 ```
@@ -192,6 +185,7 @@ The table above gives the basic statistic measures of numeric data. There are si
 This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and Belarus used car market data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
 
 ```{r, dependent-variable-normality-check, fig.height=3}
+library(gridExtra)
 plot1 = ggplot(df_numerical, aes(sample = price)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of price') 
 plot2 = ggplot(df_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of price')
 
@@ -247,6 +241,7 @@ Our sample size for this data is 38521. Based on the central limit theorem, the 
 ### Correlation Plot
 
 ```{r Fig 1}
+library(corrplot)
 corrplot(cor(df_numerical), method = 'number')
 ```
 
@@ -256,7 +251,7 @@ The team used a correlation plot for checking the correlation between continuous
 
 
 ```{r Fig. 2}
-
+library(ggplot2)
 df %>% group_by(year_produced) %>% summarize(mean_price_per_year = mean(price, na.rm=TRUE)) %>% ggplot(aes(x=year_produced,y=mean_price_per_year)) +  geom_col(fill = "#00AFBB") + labs(title='Avg Price of Car per Year', x="year produced", y = "mean price per year") + theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -471,6 +466,7 @@ We can observe that the target variable is not normally distributed which is an 
 Let try the box-Cox transformation to normalize the target variable.
 
 ```{r dependent-variable-transformation-parameter-finding}
+library(MASS)
 cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df)
 (power <- cal.box$x[cal.box$y==max(cal.box$y)])
 ```
@@ -504,6 +500,7 @@ The linearity assumption is checked by plots of residuals versus fitted values, 
 The gam plots (one per explanatory variable) gives an idea which variables to transform: if the gam plot for a variable is straight, it suggests to leave that variable untransformed. If the plot for a particular variable is non-linear, the shape of the plot suggests the form of the transformation.
 
 ```{r polynomial-term-check, fig.align='center'}
+library(mgcv)
 cal.gam <- gam(price_normal~s(odometer_value)+s(year_produced)+s(engine_capacity)+s(number_of_photos)+s(up_counter), data=df_normal)
 
 summary(fit1)
@@ -602,6 +599,7 @@ xkablevif(fit3)
 # y outlier check
 ```{r studentized deleted residual}
 # install.packages("olsrr")
+library(olsrr)
 ols_plot_resid_stud_fit(fit3, print_plot = TRUE)
 ```
 
@@ -618,8 +616,8 @@ Since all the distances are well below than the treshold 1, there is low likelih
 
 # multicollinearity removal
 ```{r partial least square}
-
-
+library(pls)
+library(dplyr)
 pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos,                                 2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeabl            e+state, data = df_normal, validation = "CV")
 summary(pls1, what = "all")
 
