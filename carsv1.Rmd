@@ -49,7 +49,7 @@ options(scientific=T, digits = 3)
 # ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
 # use scipen=999 to prevent scientific notation at all times
 ```
-
+# Introduction of Topics
 ## Why Used Car Market in Belarus?
 As it is widely known, for the last  year and a half the world has been dealing with an unprecedented event: the corona virus pandemic. While this affected many areas of people’s lives, one thing that many did not talk about was its effects on the global supply chain. People stocked up early on during the pandemic, fearing a potential scarcity in finding some of the most commonly available consumer items. For example, hygienic wipes was one of the most popular scarce items for many months,  most large market chains, CVS-target-Safeway, limited people from buying more than one swipe at once. 
 	
@@ -68,9 +68,6 @@ Considering that the Belarus used car data set was gathered from the web, this r
 
 
 
-
-
-
 ## Data Preprocessing
 
 ### Data Import and Cleaning
@@ -82,8 +79,6 @@ df = read.csv("cars.csv", header = T, stringsAsFactors = TRUE, comment.char = ""
 df = subset(df, select=c("manufacturer_name", "model_name", "transmission", "color", "odometer_value", "year_produced", "engine_fuel", "engine_has_gas", "engine_type", "engine_capacity", "body_type", "has_warranty",
 "state", "drivetrain", "price_usd", "is_exchangeable", "number_of_photos",  "up_counter"))
 ```
-
-
 
 
 #### Renaming features
@@ -170,7 +165,7 @@ The following are the SMART questions which PatternSix came up with and followed
 
 
 
-## Exploratory Data Analysis
+# Exploratory Data Analysis
 ```{r EDA}
 # summary(cars_numerical)
 library(fBasics)
@@ -180,7 +175,7 @@ xkabledply(basicStats(df_numerical))
 
 The table above gives the basic statistic measures of numeric data. There are six numerical variables in the dataset. The one that is most important is the used car's price. It has mean=6640, standard deviation(sd)=6430. The odometer_value with mean=249000, sd=136000. The year_produced with mean=2000 and sd=8.06. The engine_capacity has mean=2.06 and sd=0.67. The absolute values of skewness for all the variables are all greater than 1, which indicates they are highly skewed. The kurtosis values are all greater than 0, indicating they are sharply peaked with heavy tails. More analysis between other variables is shown below.
 
-### Normality tests
+## Normality tests
 
 This section checks the normality of numerical variables based on the Q-Q plot, histogram, and normality tests. The most common method for normality test is called *Shapiro-Wilk's method*, however, this test only works when the observation is less than 5000,and Belarus used car market data set is more extensive than this value, so a *Kolmogorov-Smirnov (K-S) normality test* will be used instead.
 
@@ -239,7 +234,7 @@ Our sample size for this data is 38521. Based on the central limit theorem, the 
 
 
 
-### Correlation Plot
+## Correlation Plot
 
 ```{r Fig 1}
 library(corrplot)
@@ -293,12 +288,12 @@ df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=
 Figure 4 shows the mean engine capacity for different body type using a box-plot. From the initial analysis the team observed for each of the groups there is a difference in median.
 
 
-### T test
+## T test
 
 When there are two samples drawn from the same population and the goal is to test whether the mean of respective two samples are the same, it is wise to perform the student-t test, or t-test in short. The reason team PatternSix did not choose the Z-test is that the team did not know the population standard deviation. Thus using t-test, team used sample standard deviation (s) to estimate the population parameter (σ).
 
 
-#### Warranty vs Price
+### Warranty vs Price
 
 PatternSix tested some of the features against prices respectively since price is going to be the dependent variable. First one the team looked at is whether cars had warranties versus different average prices. A box-plot would help show the relationship between these two.
 
@@ -323,7 +318,7 @@ t.test(x = has$price, y = hasnot$price, conf.level = 0.99)
 PatternSix subset the prices for cars based on whether they have warranties. The null hypothesis H0 is that μ1 = μ2. The alternative hypothesis H1 is μ1 <> μ2. From the result, because p-value is extremely low, team rejects the null hypothesis and concludes that whether cars have warranties does affect average price of cars.
 
 
-####  Engine Types vs Price
+###  Engine Types vs Price
 
 Next, lets take a look at whether different engine types have different average prices. same as above, PatternSix drew a box-plot to get a visual idea.
 
@@ -346,8 +341,7 @@ PatternSix subset prices for cars based on different engine types. The null hypo
 Surprisingly, the p-value is extremely low, which tells the team to reject the null hypothesis and conclude for different engine types, their average prices do differ.
 
 
-
-### $Chi^2$ test
+## $Chi^2$ test
 
 In the data set, not only do there are numerical variables,but there are also categorical variables.
 For categorical variables, data set does not fit the requirements for goodness of fit test but the data has to be tested for co-linearity between categorical variables for variable selection in model building. Test of Independence thus is performed. 
@@ -385,23 +379,23 @@ PatternSix's null hypotheses are that all pairs are independent. Interestingly, 
 For test 4, between different manufacturers and whether cars are exchangeable, and for test 5, between different colors and whether the car is automatic or manual, the results are acceptable. Due to low p-values in both tests, the null hypothesis has been rejected, which means for test 4 and 5 testing pairs, they are not independent.
 
 
-### ANOVA 
+## ANOVA 
 
 Due to the fact that there are numerous independent variables to test on, in order to improve efficiency, ANOVA was performed.
 
 Same as above, a graph would give the observer an overview of relationships against prices.
 
-#### Colors by Mean Price
+### Colors by Mean Price
 ```{r Fig. 7}
 df %>% group_by(color) %>% summarise(price_colorMean=mean(price)) %>% ggplot(aes(x=reorder(color,-price_colorMean),y=price_colorMean)) + geom_col(fill = "#00AFBB") + labs(x='Color',y='Price mean') + ggtitle('Color vs Prices ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-#### Body Types by Mean Price
+### Body Types by Mean Price
 ```{r Fig. 8}
 df %>% group_by(body_type) %>% summarise(body_price_mean = mean(price))%>% ggplot(aes(x = reorder(body_type, -body_price_mean),body_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Body Type', y='Mean of price') + ggtitle('Body Type vs Price ') + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-#### Top 10 Manufacturers by Mean Price
+### Top 10 Manufacturers by Mean Price
 ```{r Fig. 9}
 df2 = df %>% group_by(manufacturer_name) %>% summarise(manuf_price_mean = mean(price)) %>% arrange(desc(manuf_price_mean)) 
 df2 %>% slice(1:10) %>%  ggplot(aes(x = reorder(manufacturer_name, -manuf_price_mean),manuf_price_mean))+geom_col(fill = "#00AFBB") + labs(x='Manufacturer', y='Mean of price')  + ggtitle('Manufacturer vs Price ') + theme(plot.title = element_text(hjust = 0.5))
@@ -412,7 +406,7 @@ Here there are three graphs, average prices for different colors, for different 
 It could be seen that average price differences are all significant between groups in colors, body types and top ten manufacturers. Same as the t-test,a formal test should be performed to get correct conclusions.
 
 
-#### One Way ANOVA
+### One Way ANOVA
 ```{r ANOVA}
 df_aov_1 = aov(price ~  color , df)
 summary(df_aov_1)
@@ -452,16 +446,8 @@ After conducting the EDA and hypothesis tests on the data, the team has conclude
 
 PatternSix's future work for this topic is building up a model to predict the price based on the analysis that was explored to provide more effective decision-making services for future vehicle buyers and sellers.
 
-## Bibliography
-Ben Ellencweig, Sam Ezratty, Dan Fleming, and Itai Miller. (2019, June 6). Mckinsey & Company.    Retrieved from Mckinsey & Company Website:     
-https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-cars-new-platforms-accelerating-sales-in-a-digitally-disrupted-market
 
-
-Isidore, C. (2021, September 28). Retrieved from CNN Business: 
-https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
-
-
-
+# Regression Aanalysis
 ## Data Transformation
 Before moving on to model-building, it is crucial that assumptions for dependent variable are verified for building a linear model. During EDA, it was observed that dependent variable was not normally distributed which was based on assumption that error terms are independent normally distributed with mean 0. Thus box-Cox transformation was utilized which happens to possess a bonus effort of solving heteroscedasticity.
 
@@ -480,7 +466,7 @@ df_normal <- cbind(subset(df, select = -price), price_normal)
 ```
 
 
-## Models
+## Linear Regressions
 
 Moving on, PatternSix was eager to build a model supporting objectives of this project. First, a base model comprising all input variables except for model_name and engine_type was constructed.
 ```{r base-model}
@@ -488,14 +474,14 @@ y = df$price
 fit1 = lm(price_normal ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df_normal)
 summary(fit1)
 plot(fit1,which=1)
+# summary(fit1)$sigma
+# mean(fit1$residuals^2)
 ```
 
-
+At a first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and mean suqare error(MSE) at `r mean(fit1$residuals^2)`. Significance test also yielded positive results. P-value less than $2*10^(-16)$ verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
 
 ### Polynomial Terms
-At a first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and residual standard error at `r summary(fit1)$sigma`. Significance test also yielded positive results. P-value less than 2*10^(-16) verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
-
-To improve the model, PatternSix turned to gam plot. 
+For this curved regression surface, PatternSix use gam plots to solve the transformation required.
 
 The gam plot (one per explanatory variable) provides an idea of which variables to transform: if the gam plot for a variable is straight-lined, it suggests to leave the variable intact. If the plot for a particular variable does not follow a straight line, the shape of the plot guides the form of the transformation.
 
@@ -515,9 +501,10 @@ fit2 <- lm(price_normal ~ odometer_value+poly(year_produced, 2)+sin(engine_capac
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
 summary(fit2)
 plot(fit2,which=1)
+# mean(fit2$residuals^2)
 ```
 
-The results validated intuitions behind these methods.The adjusted R-squared and residual standard error both decreased, with a still significant linear relationship and significant regression coefficients at large. More importantly, residual plot displayed an evident improvement. 
+The results validated the intuitions behind these methods.The adjusted R-squared(`r summary(fit2)$adj.r.squared`)increases and MSE (`r mean(fit2$residuals^2)`) decreases, with a still significant linear relationship and significant regression coefficients at large. More importantly, the residual plot displayed an evident improvement.
 
 
 ### Interaction Term
@@ -528,15 +515,17 @@ fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capac
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
 summary(fit3)
 plot(fit3,which=1)
+# mean(fit3$residuals^2)
 ```
 
-Upon checking the results, PatternSix are content with structures of the final model, with a further improvement of adjusted R-squared to `r summary(fit3)$adj.r.squared` and a residual standard error drop to `r summary(fit3)$sigma`. P-value is still low for linear relationship and regression coefficients remain significant for a variety of variables. Residual plot is in acceptable range as well.
+Upon checking the results, PatternSix are content with structures of the final model, with a further improvement of adjusted R-squared to `r summary(fit3)$adj.r.squared` and a MSE drop to `r mean(fit3$residuals^2)`. P-value is still low for linear relationship and regression coefficients remain significant for a variety of variables. Residual plot is in acceptable range as well.
 
-## Residuals
+## Regression Diagnostics
+### Residuals
 As has been discussed, assumptions for dependent variables need to be verified for linear models. Residual plot is a quick and easy way of doing so, as demonstrated above. However, in multiple regression, one requires better methods. In residual analysis, residuals $±$ 3 $\hat{\sigma}$ is widely regarded as outliers. But variance differs for residuals, causing troubles in determination and comparison. Improvements had been made, each built upon on predecessor, solving one problem at a time, with standardized residual enabling comparison and studentized residual taking heteroscedasticity into consideration.
 
 
-## outliers
+### Outliers
 Notwithstanding, when outliers of dependent variable occur, none of aforementioned methods are suitable, in that outliers pull the regression line toward themselves,
 resulting in smaller own residuals but larger residuals for other estimates, netting an 
 overall increased regression standard deviation $\hat{\sigma}$.
@@ -552,14 +541,15 @@ ols_plot_resid_stud(fit3, print_plot = TRUE)
 
 The result thus conveyed little outliers effect.
 
-### Outliers of independent variables
+<!-- ### Outliers of independent variables -->
 Outliers however lie not only in dependent variable but also in independent variables. Common method for determination is called cook's distance. Value larger than 1 would be considered outliers.
 
 ```{r cooks distance}
 plot(cooks.distance(fit3))
 ```
 
-## Multi-collinearity removal
+## Other Regressions
+### Multi-collinearity Issue
 One more assumption of the final model is that all independent variables are linear independent, hence the name independent. When the assumption is void, variances for regression coefficients rise, dramatically dropping estimators precision, in spite of estimators remaining unbiased. This in turn makes the degree to which independent variables explain dependent variable plummet. In some cases, opposite effect of independent variables on dependent variable could be observed, which contradicts reality. The phenomena is called multi-collinearity. First, PatternSix determined to examine whether the final model contained such problem by checking variance infaltion factor (VIF). Value larger than 10 would indicate said independent variable experiences multi-collinearity with others.
 
 
@@ -579,7 +569,7 @@ plot(fit4,which=1)
 
 Data sample size is large enough, but after deleting variable with large VIF engine type, the overall fitness dropped significantly. Thus PatternSix opted for biased estimation to solve multi-collinearity problem.
 
-
+### Partial Least Square (PLS) Regression
 ```{r partial least square}
 library(pls)
 library(dplyr)
@@ -606,8 +596,7 @@ coef(pls2)
 ```
 
 
-### REGULARIZATION
-#### RIDGE
+### Ridge Regression
 
 ```{r}
 library("ISLR")
@@ -646,8 +635,7 @@ ridge.mod=glmnet(x_train,y_train,alpha=0,grid=grid)
 plot(ridge.mod)
 ```
 
-
-### Using Grid search to find the optimal lambda value 
+ Using Grid search to find the optimal lambda value 
 ```{r}
 # set.seed(1)
 # ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
@@ -687,7 +675,7 @@ print("MSE on test")
 print(mse0)
 ```
 
-#### LASSO
+### LASSO Regression
 
 ```{r}
 grid=10^seq(10,-2,length=100)
@@ -734,15 +722,41 @@ print(rsq_lasso_cv)
 Therefore, combined with evaluation of dependent variable, PatternSix concluded that addressed assumptions of the final model were met and the model was fit before further testing.
 
 
-# Model Selection
-```{r}
-Aasish_Wanted = data.frame(manufacturer_name ='Audi', model_name='A6', transmission='automatic', color='white', odometer_value = 4600, year_produced = 2015, engine_fuel='gasoline', engine_has_gas='False', engine_type = 'gasoline', engine_capacity=3.0, body_type = 'universal', has_warranty='False', state= 'owned', drivetrain='all', is_exchangeable='False', number_of_photos = 10, up_counter = 14)
+## Conclusion and Discussions
+The table below gives the comparison of different models.  
+```{r tables}
+library(kableExtra)
+d = data.frame(rbind( c( 86.1, 86.1, 5.76), c( 88.3, 88.3, 4.85), c( 88.5, 88.5, 4.77), c( 999, 999, 999), c( 89.7, '--', 4.28)), row.names = c('Base Model','Polynomial Terms ','Interaction Terms','PLS Regression','Ridge Regression'))
+colnames(d) = c('R-Square', 'Adjusted R-Square', 'Mean Square Error')
+kbl(d) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
 
-pls2.pred = predict(fit3, Aasish_Wanted, type='response')
-pls2.pred
+
+
+
+
+```{r}
+# Aasish_Wanted = data.frame(manufacturer_name ='Audi', model_name='A6', transmission='automatic', color='white', odometer_value = 4600, year_produced = 2015, engine_fuel='gasoline', engine_has_gas='False', engine_type = 'gasoline', engine_capacity=3.0, body_type = 'universal', has_warranty='False', state= 'owned', drivetrain='all', is_exchangeable='False', number_of_photos = 10, up_counter = 14)
+
+# pls2.pred = predict(fit3, Aasish_Wanted, type='response')
+# pls2.pred
 # plot(testY, pls2.pred, ylim=c(-11,2), xlim=c(-11,2),main="Test Dataset", xlab="observed", ylab="PLS Predicted")
 # abline(0, 1, col="red")
 # pls.eval=data.frame(obs=solTestY, pred=pls.pred2[,1,1])
 # defaultSummary(pls.eval)
 
 ```
+
+# Bibliography
+Ben Ellencweig, Sam Ezratty, Dan Fleming, and Itai Miller. (2019, June 6). Mckinsey & Company.    Retrieved from Mckinsey & Company Website:     
+https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-cars-new-platforms-accelerating-sales-in-a-digitally-disrupted-market
+
+
+Isidore, C. (2021, September 28). Retrieved from CNN Business: 
+https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
+
+AC Atkinson (1982). Plots, Transformations and Regression: A Introduction to Graphical methods
+of Diagnostic Residual Analysis. Oxford University Press.
+
+DA Belsley, E Kuh and RE Welsch (1980). Regression Diagnostics: Identifying Influential Data and Sources of Collinearity. Wiley.
