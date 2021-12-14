@@ -493,7 +493,7 @@ plot(fit1,which=1)
 
 
 ### Polynomial Terms
-At a first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and residual standard error at `r summary(fit1)$residuals`. Significance test also yielded positive results. P-value less than 2*10^(-16) verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
+At a first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and residual standard error at `r summary(fit1)$sigma`. Significance test also yielded positive results. P-value less than 2*10^(-16) verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
 
 To improve the model, PatternSix turned to gam plot. 
 
@@ -530,84 +530,16 @@ summary(fit3)
 plot(fit3,which=1)
 ```
 
-Upon checking the results, PatternSix are content with structures of the final model, with a further improvement of adjusted R-squared to `r summary(fit3)$adj.r.squared` and a residual standard error drop to `r summary(fit3)$residuals`. P-value is still low for linear relationship and regression coefficients remain significant for a variety of variables. Residual plot is in acceptable range as well.
-
-
-<!-- Year_produced vs price -->
-<!-- ```{r} -->
-<!-- plot(df$year_produced, df$price, main="Year_produced vs price") -->
-
-<!-- ``` -->
-<!-- Year_produced vs price -->
-<!-- ```{r} -->
-<!-- plot(df$year_produced, df$price, main="Year_produced vs price", pch=19) -->
-
-<!-- ``` -->
-<!-- # Adding year_produced as polinomail of 2nd degree -->
-<!-- ```{r} -->
-<!-- fit2 <- lm(price ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2), data = df) -->
-<!-- summary(fit2) -->
-<!-- #poly(year_produced,2) -->
-
-<!-- print(vif(fit2)) -->
-<!-- ``` -->
-<!-- We can see a significant increase in adjusted R-squared and lower Residual standard error -->
-<!-- Note: Annova to be performed on all models -->
-
-<!-- ```{r} -->
-<!-- plot(df$odometer_value, df$price, main="odometer_value vs price", pch=19) -->
-<!-- ``` -->
-<!-- Note: how to model 1/x^2 in lm -->
-
-<!-- ```{r} -->
-<!-- fit3 <- lm(price ~ manufacturer_name+color+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)+(1/odometer_value), data = df) -->
-<!-- summary(fit2) -->
-<!-- #poly(year_produced,2) -->
-<!-- library(car) -->
-<!-- print(vif(fit1)) -->
-<!-- ``` -->
-
-
-<!-- No effect of (1/odometer_value) -->
-
-
-
-
-
-<!-- Checking for interaction term between year_produced^2 *odometer_value. Removing color -->
-<!-- ```{r} -->
-<!-- fit4 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+poly(year_produced,2)*odometer_value, data = df) -->
-<!-- summary(fit4) -->
-
-<!-- library(car) -->
-<!-- print(vif(fit4)) -->
-<!-- ``` -->
-
-
-<!-- We observe a increase in the Adjusted R-squared -->
-
-
-
-<!-- Adding year_produced*number_of_photos -->
-<!-- ```{r} -->
-<!-- fit5 <- lm(price ~ manufacturer_name+transmission+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+state+up_counter+poly(year_produced,2)*odometer_value*number_of_photos, data = df) -->
-<!-- summary(fit5) -->
-
-<!-- library(car) -->
-<!-- print(vif(fit5)) -->
-<!-- ``` -->
-<!-- Very high VIFs for the new interaction terms -->
-
-<!-- When the regression model passed either t test or F test, the only thing confirmed is the linear relationship between x and y is significant, or the regression model is valid. It does not gurantee the fit is good enough and we cannot rule out data unreliability due to other unknown factors, like outliers.  -->
-
+Upon checking the results, PatternSix are content with structures of the final model, with a further improvement of adjusted R-squared to `r summary(fit3)$adj.r.squared` and a residual standard error drop to `r summary(fit3)$sigma`. P-value is still low for linear relationship and regression coefficients remain significant for a variety of variables. Residual plot is in acceptable range as well.
 
 ## Residuals
-As has been discussed, assumptions for dependent variables need to be verified for linear models. Residual plot is a quick and easy way of doing so, as demonstrated above. However, in multiple regression, one requires better methods. In residual analysis, residuals $±$3$\hat{\sigma}$ is widely regarded as outliers. But variance differs for residuals, causing troubles in determination and comparison. Improvements had been made, each built upon on predecessor, solving one problem at a time, with standardized residual enabling comparison and studentized residual taking heteroscedasticity into consideration.
+As has been discussed, assumptions for dependent variables need to be verified for linear models. Residual plot is a quick and easy way of doing so, as demonstrated above. However, in multiple regression, one requires better methods. In residual analysis, residuals $±$ 3 $\hat{\sigma}$ is widely regarded as outliers. But variance differs for residuals, causing troubles in determination and comparison. Improvements had been made, each built upon on predecessor, solving one problem at a time, with standardized residual enabling comparison and studentized residual taking heteroscedasticity into consideration.
 
 
 ## outliers
-Notwithstanding, when outliers of dependent variable occur, none of aforementioned methods are suitable, in that outliers pull the regression line toward themselves, resulting in smaller own residuals but larger residuals for other estimates, netting an 
-overall increased regression standard deviation$\hat{\sigma}$.
+Notwithstanding, when outliers of dependent variable occur, none of aforementioned methods are suitable, in that outliers pull the regression line toward themselves,
+resulting in smaller own residuals but larger residuals for other estimates, netting an 
+overall increased regression standard deviation $\hat{\sigma}$.
 
 Solution is to utilize studentized deleted residual which is the difference between observed value and estimates regressed on other observed values. Absolute value of larger than 3 would be considered outliers.
 
@@ -620,16 +552,14 @@ ols_plot_resid_stud(fit3, print_plot = TRUE)
 
 The result thus conveyed little outliers effect.
 
-### outliers of independent variables
+### Outliers of independent variables
 Outliers however lie not only in dependent variable but also in independent variables. Common method for determination is called cook's distance. Value larger than 1 would be considered outliers.
 
 ```{r cooks distance}
 plot(cooks.distance(fit3))
 ```
 
-Therefore, combined with evaluation of dependent variable, PatternSix concluded that addressed assumptions of the final model were met and the model was fit before further testing.
-
-## multi-collinearity removal
+## Multi-collinearity removal
 One more assumption of the final model is that all independent variables are linear independent, hence the name independent. When the assumption is void, variances for regression coefficients rise, dramatically dropping estimators precision, in spite of estimators remaining unbiased. This in turn makes the degree to which independent variables explain dependent variable plummet. In some cases, opposite effect of independent variables on dependent variable could be observed, which contradicts reality. The phenomena is called multi-collinearity. First, PatternSix determined to examine whether the final model contained such problem by checking variance infaltion factor (VIF). Value larger than 10 would indicate said independent variable experiences multi-collinearity with others.
 
 
@@ -673,7 +603,6 @@ To solve the problem of multicollinearity, Pattern6 utilized partial least squar
 pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data             = df_normal, jackknife = TRUE, validation = "CV", ncomp = 88)
 coef(pls2)
-
 ```
 
 
@@ -800,6 +729,10 @@ plot(model_cv_lasso, xvar = "lambda")
 print(ssr_cv)
 print(rsq_lasso_cv)
 ```
+
+
+Therefore, combined with evaluation of dependent variable, PatternSix concluded that addressed assumptions of the final model were met and the model was fit before further testing.
+
 
 # Model Selection
 ```{r}
