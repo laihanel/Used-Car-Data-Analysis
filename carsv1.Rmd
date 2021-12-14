@@ -705,7 +705,9 @@ coef(pls2)
 
 ### REGULARIZATION
 #### RIDGE
+In situations when the independent variables are highly correlated, ridge regression is a method of calculating the coefficients of multiple-regression models.
 
+Initialising independent variables(x) and dependent variable(y) for framing train and test data from the dataset.
 ```{r}
 library("ISLR")
 df_reg = uzscale(df, append=0, "price_normal")
@@ -713,7 +715,7 @@ x=model.matrix(price_normal~.,df_reg)[,-1]
 y=df_reg$price_normal
 ```
 
-
+Prepare train and test data for independent variables(x) and dependent variable(y).
 ```{r, warning=F}
 library("dplyr")
 set.seed(1)
@@ -735,7 +737,7 @@ y_test = test$price_normal %>% unlist()
 # y_test = test %>% select(price) %>% unlist() # %>% as.numeric()
 ```
 
-
+Building Ridge Model
 ```{r}
 library("glmnet")
 grid=10^seq(10,-2,length=100)
@@ -756,8 +758,15 @@ plot(ridge.mod)
 # lambda_cv <- ridge_cv$lambda.min
 
 ```
+Cross-validation is a statistical method for evaluating and comparing learning algorithms that divides data into two segments: one for learning or training a model and the other for validating it.
 
+Cross validation involves the following steps:
 
+  1. Allocate a sample data set for study.
+  2. Use the rest of the dataset to train the model.
+  3. Use the test (validation) set's reserve sample. This will assist you in determining how effective your model's performance is.        Proceed with the existing model if your model produces a positive result on validation data. It's fantastic!
+
+Performed prediction for the model, R-Squared test to check how model fits the set of observations and MSE test to check how close the estimates are close to the actual values.
 ```{r}
 # read the lambda value for cross-validation
 lambda_cv <- 0.581
@@ -785,7 +794,9 @@ print(mse0)
 ```
 
 #### LASSO
+Lasso regression is a sort of shrinkage-based linear regression. Data values are shrunk towards a central point, such as the mean, in shrinkage. Simple, sparse models are encouraged by the lasso approach (i.e. models with fewer parameters).The purpose of lasso regression is to find the subset of predictors that produces the least amount of prediction error for a quantitative response variable.
 
+Initialising independent variables(x) and dependent variable(y) for framing train and test data from the dataset.
 ```{r}
 grid=10^seq(10,-2,length=100)
 lasso.mod=glmnet(x_train,y_train,alpha=1,grid=grid) 
@@ -811,6 +822,7 @@ plot(lasso.mod)
 # print(lambda_cv)
 ```
 
+Prepare train and test data for independent variables(x) and dependent variable(y).
 ```{r}  
 # read the lambda value for cross-validation
 lambda_cv <- 0.00374
@@ -827,6 +839,7 @@ print(rsq_lasso_cv)
 ```
 
 # Model Selection
+Building model to predict the car price based on selected features.
 ```{r}
 Aasish_Wanted = data.frame(manufacturer_name ='Audi', model_name='A6', transmission='automatic', color='white', odometer_value = 4600, year_produced = 2015, engine_fuel='gasoline', engine_has_gas='False', engine_type = 'gasoline', engine_capacity=3.0, body_type = 'universal', has_warranty='False', state= 'owned', drivetrain='all', is_exchangeable='False', number_of_photos = 10, up_counter = 14)
 
