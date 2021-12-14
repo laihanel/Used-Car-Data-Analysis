@@ -186,6 +186,7 @@ This section checks the normality of numerical variables based on the Q-Q plot, 
 
 ```{r, dependent-variable-normality-check, fig.height=3}
 library(gridExtra)
+library(ggplot2)
 plot1 = ggplot(df_numerical, aes(sample = price)) + stat_qq(col="#00AFBB") + stat_qq_line() + labs(title = 'Q-Q plot of price') 
 plot2 = ggplot(df_numerical, aes(x = price)) + geom_histogram(fill = "#00AFBB", colour="white", bins=40) + labs(title = 'Histogram of price')
 
@@ -462,8 +463,7 @@ https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply
 
 
 ## Data Transformation
-We can observe that the target variable is not normally distributed which is an assumption of the linear regression model
-Let try the box-Cox transformation to normalize the target variable.
+Before moving on to model-building, it is crucial that assumptions for dependent variable are verified for building a linear model. During EDA, it was observed that dependent variable was not normally distributed which was based on assumption that error terms are independent normally distributed with mean 0. Thus box-Cox transformation was utilized which happens to possess a bonus effort of solving heteroscedasticity.
 
 ```{r dependent-variable-transformation-parameter-finding}
 library(MASS)
@@ -472,8 +472,7 @@ cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engi
 ```
 
 
-
-Looks like a transformation close to 0.22 might be useful. Another advantage of transforming the response could be that it may lead to a model that predicts positive result.
+It seems like an undetermined coefficient close to 0.22 would be ideal.
 ```{r dependent-variable-transformation}
 price_normal = (df$price^power-1)/power
 data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
@@ -483,7 +482,7 @@ df_normal <- cbind(subset(df, select = -price), price_normal)
 
 ## Models
 
-Taking all the features except model_name
+Moving on PatternSix was eager to build a model supporting objectives of this project. First, a base model comprising all input variables except for model_name and engine_type was constructed.
 ```{r base-model}
 y = df$price
 fit1 = lm(price_normal ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df_normal)
@@ -494,10 +493,11 @@ plot(fit1,which=1)
 
 
 ### Polynomial Terms
-This has improved the fit but it will see whether changing some of the covariates can be helpful.
-The linearity assumption is checked by plots of residuals versus fitted values, plots of residuals versus explanatory variables, partial regression plots or gam plots. Here PatternSix apply the gam plot for our continuous variables to find the suitable transformation of the variables follow a linear model.
+At a first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and residual standard error at `r summary(fit1)$residuals`. Significance test also yielded positive results. P-value less than 2*10^(-16) verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
 
-The gam plots (one per explanatory variable) gives an idea which variables to transform: if the gam plot for a variable is straight, it suggests to leave that variable untransformed. If the plot for a particular variable is non-linear, the shape of the plot suggests the form of the transformation.
+To improve the model, PatternSix turned to gam plot. 
+
+The gam plot (one per explanatory variable) provides an idea of which variables to transform: if the gam plot for a variable is straight-lined, it suggests to leave the variable intact. If the plot for a particular variable does not follow a straight line, the shape of the plot guides the form of the transformation.
 
 ```{r polynomial-term-check, fig.align='center'}
 library(mgcv)
@@ -507,7 +507,7 @@ summary(fit1)
 par(mfrow=c(2,3))
 plot(cal.gam)
 ```
-These plots indicate that `odometer_value` and `up_counter` should remain untransformed (because the plot is relatively straight), but `year_produced`, `engine_capacity` and `number_of_photos` need transforming to generate a better result in the modeling. One possibility is to add a degree of two polynomial in `year_produced`, a sin transformation in `engine_capacity` and a degree of two polynomial in `number_of_photos` to the regression equation.
+These plots indicate that `odometer_value` and `up_counter` should remain unaltered (because the plot is relatively straight), but `year_produced`, `engine_capacity` and `number_of_photos` require transformation. One possibility is to replace them with a degree of two polynomial term of `year_produced`, a sin transformation on `engine_capacity` and a degree of two polynomial term `number_of_photos`. 
 
 
 ```{r add-polynomial-terms}
@@ -517,16 +517,20 @@ summary(fit2)
 plot(fit2,which=1)
 ```
 
+The results validated intuitions behind these methods.The adjusted R-squared and residual standard error both decreased, with a still significant linear relationship and significant regression coefficients at large. More importantly, residual plot displayed an evident improvement. 
 
-### Interaction Terms
-Checking for interaction term between year_produced^2 *odometer_value. Removing color
-```{r}
+
+### Interaction Term
+PatternSix is a team dedicating to their craft. When correlation plot was generated during EDA, it could be observed that `odometer_value` and `year_produced` are closely correlated at `r cor(df_normal$odometer_value, df$year_produced)`, prompting decisions to check whether interactions between these two terms would be a better fit.
+
+```{r interction-term-check}
 fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
 summary(fit3)
 plot(fit3,which=1)
-xkablevif(fit3)
 ```
+
+Upon checking the results, PatternSix are content with structures of the final model, with a further improvement of adjusted R-squared to `r summary(fit3)$adj.r.squared` and a residual standard error drop to `r summary(fit3)$residuals`. P-value is still low for linear relationship and regression coefficients remain significant for a variety of variables. Residual plot is in acceptable range as well.
 
 
 <!-- Year_produced vs price -->
@@ -596,29 +600,61 @@ xkablevif(fit3)
 
 <!-- When the regression model passed either t test or F test, the only thing confirmed is the linear relationship between x and y is significant, or the regression model is valid. It does not gurantee the fit is good enough and we cannot rule out data unreliability due to other unknown factors, like outliers.  -->
 
-# y outlier check
+
+## Residuals
+As has been discussed, assumptions for dependent variables need to be verified for linear models. Residual plot is a quick and easy way of doing so, as demonstrated above. However, in multiple regression, one requires better methods. In residual analysis, residuals $±$3$\hat{\sigma}$ is widely regarded as outliers. But variance differs for residuals, causing troubles in determination and comparison. Improvements had been made, each built upon on predecessor, solving one problem at a time, with standardized residual enabling comparison and studentized residual taking heteroscedasticity into consideration.
+
+
+## outliers
+Notwithstanding, when outliers of dependent variable occur, none of aforementioned methods are suitable, in that outliers pull the regression line toward themselves, resulting in smaller own residuals but larger residuals for other estimates, netting an 
+overall increased regression standard deviation$\hat{\sigma}$.
+
+Solution is to utilize studentized deleted residual which is the difference between observed value and estimates regressed on other observed values. Absolute value of larger than 3 would be considered outliers.
+
+
 ```{r studentized deleted residual}
 # install.packages("olsrr")
 library(olsrr)
-ols_plot_resid_stud_fit(fit3, print_plot = TRUE)
+ols_plot_resid_stud(fit3, print_plot = TRUE)
 ```
 
+The result thus conveyed little outliers effect.
 
+### outliers of independent variables
+Outliers however lie not only in dependent variable but also in independent variables. Common method for determination is called cook's distance. Value larger than 1 would be considered outliers.
 
-
-# x outlier check
 ```{r cooks distance}
-plot(cooks.distance(
-fit3)) # replace model
+plot(cooks.distance(fit3))
 ```
 
-Since all the distances are well below than the treshold 1, there is low likelihood of X outliers.
+Therefore, combined with evaluation of dependent variable, PatternSix concluded that addressed assumptions of the final model were met and the model was fit before further testing.
 
-# multicollinearity removal
+## multi-collinearity removal
+One more assumption of the final model is that all independent variables are linear independent, hence the name independent. When the assumption is void, variances for regression coefficients rise, dramatically dropping estimators precision, in spite of estimators remaining unbiased. This in turn makes the degree to which independent variables explain dependent variable plummet. In some cases, opposite effect of independent variables on dependent variable could be observed, which contradicts reality. The phenomena is called multi-collinearity. First, PatternSix determined to examine whether the final model contained such problem by checking variance infaltion factor (VIF). Value larger than 10 would indicate said independent variable experiences multi-collinearity with others.
+
+
+```{r check-multi-collinearity}
+xkablevif(fit3)
+```
+
+Complete multi-collinearity seldom exists while approximate collinearity is prevalent. Our final model could not avoid it either, displayed by the VIF results. However, there are ways to diminish such problem as much as possible. Common approaches are deleting insignificant explanatory variables as well as expanding sample size. 
+
+
+```{r delete-large-VIF-variable}
+fit4 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
+summary(fit4)
+plot(fit4,which=1)
+```
+
+Data sample size is large enough, but after deleting variable with large VIF engine type, the overall fitness dropped significantly. Thus PatternSix opted for biased estimation to solve multi-collinearity problem.
+
+
 ```{r partial least square}
 library(pls)
 library(dplyr)
-pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos,                                 2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeabl            e+state, data = df_normal, validation = "CV")
+pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal, validation = "CV")
 summary(pls1, what = "all")
 
 pls.RMSEP = RMSEP(pls1, estimate="CV")
