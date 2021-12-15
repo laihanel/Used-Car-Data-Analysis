@@ -568,13 +568,36 @@ Data sample size is large enough, but after deleting variable with large VIF `en
 
 
 ### REGULARIZATION
+
 The principle behind the first approach is directly adding penalties to regression coefficients.
 Two variations existed. Both share significant similarities while differ in some key aspects.
 
 #### RIDGE Regression
-The first variation is called ridge regression, which adds penalties to squared value of regression coefficients.
 
-Initializing independent variables(x) and dependent variable(y) for framing train and test data from the data set.
+Additionally, the team decided to build the Ridge regression model to deal with the issue of multicollinearity. 
+Ridge regression is an extension of linear regression where the loss function is modified to minimize the complexity of the model. This modification is done by adding a penalty parameter that is equivalent to the square of the magnitude of the coefficients.
+
+Loss function = OLS + alpha * summation (squared coefficient values)
+
+Ridge regression is also referred to as l2 regularization. The lines of code below construct a ridge regression model. The first line loads the library, while the next two lines create the training data matrices for the independent (x) and dependent variables (y).
+
+The same step is repeated for the test dataset in the fourth and fifth lines of code. The sixth line creates a list of lambda values for the model to try, while the seventh line builds the ridge regression model.
+
+The arguments used in the model are:
+
+nlambda: determines the number of regularization parameters to be tested.
+
+alpha: determines the weighting to be used. In case of ridge regression, the value of alpha is zero.
+
+family: determines the distribution family to be used. Since this is a regression model, we will use the Gaussian distribution.
+
+lambda: determines the lambda values to be tried.
+
+
+
+Following is the implementation.
+
+We use the library and the function [glmet](https://cran.r-project.org/web/packages/glmnet/index.html) (developed for Lasso and Elastic-Net Regularized Generalized Linear Models) to build the ridge and lasso regresion models.
 
 ```{r}
 library("ISLR")
@@ -582,6 +605,10 @@ df_reg = uzscale(df_normal, append=0, "price_normal")
 x=model.matrix(price_normal~.,df_reg)[,-1]
 y=df_reg$price_normal
 ```
+
+##### Train and Test sets
+
+Let us split the data into training and test set, so that we can estimate test errors. The split will be used here for Ridge and later for Lasso regression.
 
 
 ```{r, warning=F}
@@ -599,22 +626,11 @@ y_test = test$price_normal %>% unlist()
 ```
 
 
+##### Grid search
 
-```{r}
-# y_train = train %>% select(price) %>% unlist() # %>% as.numeric()
-# y_test = test %>% select(price) %>% unlist() # %>% as.numeric()
-```
+Glmnet has the function cv.glmnet() that automatically performs k-fold cross validation using k = 10 folds.
+Code Commented due to long waiting time for cross validation.
 
-
-```{r}
-library("glmnet")
-grid=10^seq(10,-2,length=100)
-ridge.mod=glmnet(x_train,y_train,alpha=0,grid=grid) 
-plot(ridge.mod)
-```
-
-
-##### Using Grid search to find the optimal lambda value 
 ```{r}
 # set.seed(1)
 # ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
@@ -635,7 +651,7 @@ Cross validation involves the following steps:
   2. Use the rest of the data set to train the model.
   3. Use the test (validation) set's reserve sample. This will assist you in determining how effective your model's performance is.Proceed with the existing model if your model produces a positive result on validation data. It's fantastic!
 
-Performed prediction for the model, R-Squared test to check how model fits the set of observations and MSE test to check how close the estimates are close to the actual values.
+Performed prediction for the model, adjusted R-Squared test to check how model fits the set of observations and Residual Standard Error test to check how close the estimates are close to the actual values.
 
 ```{r}
 # read the lambda value for cross-validation
@@ -644,6 +660,7 @@ lambda_cv <- 0.581
 # residuals and multiple R-squared
 print("The value of lambda is for the lowest MSE is ")
 print(lambda_cv)
+library(glmnet)
 
 model_cv <- glmnet(x_train,y_train, alpha = 0, lambda = lambda_cv,  standardize = TRUE)
 y_hat_cv <- predict(model_cv, x_test)
@@ -657,25 +674,29 @@ adjrsq_ridge_cv = 1 - (1 - rsq_ridge_cv ^2) * (nrow(x_test) - 1) / (nrow(x_test)
 mse0 <- sum((y_test - y_hat_cv) ^ 2) / (nrow(x_test) - ncol(x_test) -1)
 rse0 = sqrt(mse0)
 
-print("Adjusted R-sqaured")
+print("Adjusted R-squared")
 print(adjrsq_ridge_cv)
 print("residual standard error on test")
 print(rse0)
 ```
 
+It was observed that the lowest value of residual standard error on test for the computed lambda value is `r rse0` and the adjusted R-squared value to be `r adjrsq_ridge_cv`
+
+
 #### LASSO Regression
-The second variation is called Lasso regression, which adds penalty terms to absolute value of regression coefficients. It is a sort of shrinkage-based linear regression. Data values shrunk towards a central point, such as the mean, in shrinkage. Simple, sparse models are encouraged by the lasso approach (i.e. models with fewer parameters).The purpose of lasso regression is to find the subset of predictors that produces the least amount of prediction error for a quantitative response variable.
+The second variation is called Lasso regression, which adds penalty terms to absolute value of regression coefficients. Lasso regression, or the Least Absolute Shrinkage and Selection Operator, is also a modification of linear regression. In lasso, the loss function is modified to minimize the complexity of the model by limiting the sum of the absolute values of the model coefficients (also called the l1-norm).
 
-Initializing independent variables(x) and dependent variable(y) for framing train and test data from the data set.
+The loss function for lasso regression can be expressed as below:
 
-```{r}
-grid=10^seq(10,-2,length=100)
-lasso.mod=glmnet(x_train,y_train,alpha=1,grid=grid) 
-plot(lasso.mod)
-```
+Loss function = OLS + alpha * summation (absolute values of the magnitude of the coefficients)
 
+In the above function, alpha is the penalty parameter we need to select. Using an l1-norm constraint forces some weight values to zero to allow other coefficients to take non-zero values.
 
+The first step to build a lasso model is to find the optimal lambda value using the code below. 
 
+Code Commented due to long waiting time for cross validation.
+
+##### Grid search
 ```{r }
 # # Center y, X will be standardized in the modelling function
 # 
@@ -692,7 +713,11 @@ plot(lasso.mod)
 # lambda_cv <- lasso_cv$lambda.min
 # print("Best lambda")
 # print(lambda_cv)
+# print("The above plot show the results of the cross validation to find the optimal value of lambda. The first vertical line denotes the lowest value of lambda")
 ```
+
+The optimal lambda value comes out to be 0.00374. and will be used to build the lasso regression model. The next step is to use the predict function to generate predictions on the train and test data.
+
 
 ```{r}  
 # read the lambda value for cross-validation
@@ -708,6 +733,8 @@ plot(model_cv_lasso, xvar = "lambda")
 print(ssr_cv)
 print(rsq_lasso_cv)
 ```
+It was observed that the lowest value of MSE on test for the computed lambda value is `r ssr_cv` and the R-squared value to be `r rsq_lasso_cv`
+
 
 
 ### Dimensionality Reduction
@@ -810,6 +837,10 @@ kable_styling(bootstrap_options = c("striped", "hover"))
 According to Frank L.E. and Friedman (1993), table above summarized assumptions for each regression method. In turn, it is concluded `PLS` and `PCR` are preferable due to limited assumptions required.
 
 Combined with testing results from different methods shown in the first table, PatternSix decided to choose the `PLS` model with variables of coefficient with at least 99% confidence as the final one. 
+
+The results of regressions both suggest that the year produced is the most critical parameter in price prediction since it has the highest coefficients. In contrast, the odometer value has a lower coefficient than expected. One reason is that the interaction term between odometer value and year produced provides information for this feature. From the result of the PLS model, Porsche has the highest price (coefficient = 2.14), and vehicles from Geely have the lowest price (coefficient=-7.24) compared with the other manufacturers. There is no significant difference between the different colors of cars; the baseline black has a slightly higher price than other colors. For the body type, limousine vehicle has the most decisive influence on price for sure. The variance of coefficients between different body types is significant, so this is an important feature that needs to be concerned when purchasing a car. The result shows other features that provide us with engine fuel type, and vehicle state.
+
+To conclude, the features that influence the price include the year of production, body type, manufacture name, colors, engine fuel type, and vehicle state. In the end the team was able to answer all of its SMART questions. Especially the Specific question that if PatternSix could come up with a model to predict the price based on certain parameters. The goal was certainly both measured and achieved. The team was able to finish the work within the specified time limit. 
 
 ```{r}
 # Aasish_Wanted = data.frame(manufacturer_name ='Audi', model_name='A6', transmission='automatic', color='white', odometer_value = 4600, year_produced = 2015, engine_fuel='gasoline', engine_has_gas='False', engine_type = 'gasoline', engine_capacity=3.0, body_type = 'universal', has_warranty='False', state= 'owned', drivetrain='all', is_exchangeable='False', number_of_photos = 10, up_counter = 14)
