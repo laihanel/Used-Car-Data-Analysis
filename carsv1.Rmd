@@ -100,7 +100,7 @@ colSums(is.na(df))
 Engine Capacity has 10 null values, PattaernSix dropped the rows with null values.
 ```{r include=FALSE}
 #Droping the rows with null values 
-df <- df[complete.cases(df), ]
+df <- df[complete.cases(df), ] 
 ```
 
 
@@ -274,13 +274,6 @@ xkabledply(cor(df4))
 The observed correlation coefficient equals 0.6. However, in Figure 1 it was observed that the correlation coefficient between price and engine capacity was 0.3. This trend could be explained by the outliers which are found in higher engine capacity.
 
 
-
-```{r Tbl. 2}
-df %>% group_by(engine_capacity) %>% summarize(mean_price_per_capacity = mean(price, na.rm=TRUE)) ->df4
-xkabledply(cor(df4))
-#corrplot(cor(cars_numerical), method = 'number')
-```
-
 ```{r Fig. 4}
 df %>% ggplot(aes(x=reorder(body_type,-engine_capacity),y=engine_capacity, fill=body_type))+geom_boxplot() + labs(x='Body Type', y='Engine Capicity')  + ggtitle('Body Type vs Engine Capicity ') + theme(plot.title = element_text(hjust = 0.5))
 ```
@@ -339,6 +332,7 @@ t.test(x = diesel$price, y = gas$price, conf.level = 0.99)
 PatternSix subset prices for cars based on different engine types. The null hypothesis H0 is μ1 = μ2. The null hypothesis is μ1 $\neq$ μ2.
 
 Surprisingly, the p-value is extremely low, which tells the team to reject the null hypothesis and conclude for different engine types, their average prices do differ.
+
 
 
 ## $Chi^2$ test
@@ -449,7 +443,7 @@ PatternSix's future work for this topic is building up a model to predict the pr
 
 # Regression Analysis
 ## Data Transformation
-Before moving on to model-building, it is crucial that assumptions for dependent variables are verified for building a linear model. During EDA, it was observed that dependent variable was not normally distributed which was based on assumption that error terms are independent normally distributed with mean 0. Thus box-Cox transformation was utilized which happens to possess a bonus effort of solving heteroscedasticity.
+Before moving on to model-building, it is crucial that assumptions for dependent variable are verified for building a linear model. During EDA, it was observed that dependent variable was not normally distributed which was based on assumption that error terms are independent normally distributed with mean 0. Thus box-Cox transformation was utilized which happens to possess a bonus effort of solving heteroscedasticity.
 
 ```{r dependent-variable-transformation-parameter-finding}
 library(MASS)
@@ -461,12 +455,12 @@ cal.box <- boxcox(price~manufacturer_name+color+transmission+odometer_value+engi
 It seems like an undetermined coefficient close to 0.22 would be ideal.
 ```{r dependent-variable-transformation}
 price_normal = (df$price^power-1)/power
-data_frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
+data.frame(val=price_normal) %>% ggplot(aes(val)) + geom_density()
 df_normal <- cbind(subset(df, select = -price), price_normal)
 ```
 
 
-## Linear Regressions
+## Linear Regression
 
 Moving on, PatternSix was eager to build a model supporting objectives of this project. First, a base model comprising all input variables except for model_name and engine_type was constructed.
 ```{r base-model}
@@ -474,15 +468,15 @@ y = df$price
 fit1 = lm(price_normal ~ manufacturer_name+color+transmission+odometer_value+engine_fuel+engine_capacity+body_type+has_warranty+state+drivetrain+is_exchangeable+number_of_photos+state+up_counter+year_produced, data = df_normal)
 summary(fit1)
 plot(fit1,which=1)
-# summary(fit1)$sigma
-# mean(fit1$residuals^2)
+#summary(fit1)$adj.r.squared
+#summary(fit1)$sigma
 ```
 
-At the first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and mean square error(MSE) at `r mean(fit1$residuals^2)`. Significance test also yielded positive results. P-value less than 2*10^(-16) verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
+At the first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and residual standard error at `r summary(fit1)$sigma`. Significance test also yielded positive results. P-value less than 2*10^(-16) verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
 
 ### Polynomial Terms
 
-For this curved regression surface, PatternSix used Gam plots to solve the transformation required.
+For this curved regression surface, PatternSix used GAM plot to solve the transformation required. 
 
 The GAM plot (one per explanatory variable) provides an idea of which variables to transform: if the GAM plot for a variable is straight-lined, it suggests to leave the variable intact. If the plot for a particular variable does not follow a straight line, the shape of the plot guides the form of the transformation.
 
@@ -502,24 +496,26 @@ fit2 <- lm(price_normal ~ odometer_value+poly(year_produced, 2)+sin(engine_capac
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
 summary(fit2)
 plot(fit2,which=1)
-# mean(fit2$residuals^2)
+#summary(fit2)$adj.r.squared
+#summary(fit2)$sigma
 ```
 
-The results validated the intuitions behind these methods.The adjusted R-squared(`r summary(fit2)$adj.r.squared`)increases and MSE (`r mean(fit2$residuals^2)`) decreases, with a still significant linear relationship and significant regression coefficients at large. More importantly, the residual plot displayed an evident improvement.
+The results validated the intuitions behind these methods.The adjusted R-squared `r summary(fit2)$adj.r.squared` and residual standard error `r summary(fit2)$sigma` both decreased, with a still significant linear relationship and significant regression coefficients at large. More importantly, the residual plot displayed an evident improvement. 
 
 
 ### Interaction Terms
 PatternSix is a team dedicated to its craft. When correlation plot was generated during EDA, it could be observed that `odometer_value` and `year_produced` are closely correlated at `r cor(df_normal$odometer_value, df$year_produced)`, prompting decisions to check whether interactions between these two terms would be a better fit.
 
-```{r interction-term-check}
+```{r interaction-term-check}
 fit3 <- lm(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
            +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal)
 summary(fit3)
 plot(fit3,which=1)
-# mean(fit3$residuals^2)
+#summary(fit3)$adj.r.squared
+#summary(fit3)$sigma
 ```
 
-Upon checking the results, PatternSix are content with structures of the final model, with a further improvement of adjusted R-squared to `r summary(fit3)$adj.r.squared` and a MSE drop to `r mean(fit3$residuals^2)`. P-value is still low for linear relationship and regression coefficients remain significant for a variety of variables. Residual plot is in acceptable range as well.
+Upon checking the results, PatternSix are content with structures of the final model, with a further improvement of adjusted R-squared to `r summary(fit3)$adj.r.squared` and a residual standard error drop to `r summary(fit3)$sigma`. P-value is still low for linear relationship and regression coefficients remain significant for a variety of variables. Residual plot is in acceptable range as well.
 
 ## Regression Diagnostics
 ### Residuals
@@ -527,12 +523,13 @@ As it was previously discussed, assumptions for dependent variables need to be v
 
 
 ### Outliers
-Notwithstanding, when outliers of dependent variable occur, none of aforementioned methods are suitable, in that outliers pull the regression line toward themselves, resulting in smaller own residuals but larger residuals for other estimates, netting an overall increased regression standard deviation $\hat{\sigma}$.
+Notwithstanding, when outliers of dependent variable occur, none of aforementioned methods are suitable, in that outliers pull the regression line toward themselves, resulting in smaller own residuals but larger residuals for other estimates, netting an 
+overall increased regression standard deviation $\hat{\sigma}$.
 
-Solution is to utilize studentized deleted residual which is the difference between observed value and estimates regressed on other observed values. Absolute value of larger than 3 would be considered outliers.
+Solution is to utilize studentized deleted residual which is the difference between observed dependent value and estimates regressed on other observed independent values. Absolute value of larger than 3 would be considered outliers.
 
 
-```{r studentized deleted residual}
+```{r studentized-deleted-residual}
 # install.packages("olsrr")
 library(olsrr)
 ols_plot_resid_stud(fit3, print_plot = TRUE)
@@ -548,7 +545,7 @@ plot(cooks.distance(fit3))
 ```
 
 ## Other Regressions
-### Multi-collinearity Issue
+### Multicollinearity Issue
 One more assumption of the final model is that all independent variables are linear independent, hence the name independent. When the assumption is void, variances for regression coefficients rise, dramatically dropping estimators precision, in spite of estimators remaining unbiased. This in turn makes the degree to which independent variables explain dependent variable plummet. In some cases, opposite effect of independent variables on dependent variable could be observed, which contradicts reality. The phenomena is called multicollinearity. First, PatternSix determined to examine whether the final model contained such problem by checking variance inflation factor (VIF). Value larger than 10 would indicate said independent variable experiences multicollinearity with others.
 
 
@@ -566,39 +563,16 @@ summary(fit4)
 plot(fit4,which=1)
 ```
 
-Data sample size is large enough, but after deleting variable with large VIF engine type, the overall fitness dropped significantly. Thus PatternSix opted for biased estimation to solve multicollinearity problem.
-
-### Partial Least Square (PLS) Regression
-```{r partial least square}
-library(pls)
-library(dplyr)
-pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_normal, validation = "CV")
-summary(pls1, what = "all")
-
-pls.RMSEP = RMSEP(pls1, estimate="CV")
-plot(pls.RMSEP, main="RMSEP PLS Price", xlab="components")
-min_comp = which.min(pls.RMSEP$val)
-min(pls.RMSEP$val)
-points(min_comp, min(pls.RMSEP$val), pch=1, col="red", cex=1.5)
-plot(pls1, ncomp = 88, line = TRUE)
-
-```
-
-
-To solve the problem of multicollinearity, Pattern6 utilized partial least square method.According to Frank L.E. and Friedman (1993), compared to other methods like ridge regression and PCR, fewer assumptions need to be made, and yield better results. Cross validation was performed to calculate RMSEP. The comps  are Letent Factors and at most 97 components were utilized. At around 86 components, the RMSEP gets extreme small value. Thus 86 components is used to generate the final model.
-
-```{r}
-pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
-           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data             = df_normal, jackknife = TRUE, validation = "CV", ncomp = 88)
-coef(pls2)
-```
+Data sample size is large enough, but after deleting variable with large VIF `engine_fuel`, the overall fitness dropped significantly. Thus PatternSix opted for biased estimation to solve multicollinearity problem.
 
 
 
-### RIDGE Regression
+### REGULARIZATION
+The principle behind the first approach is directly adding penalties to regression coefficients.
+Two variations existed. Both share significant similarities while differ in some key aspects.
 
-In situations when the independent variables are highly correlated, ridge regression is a method of calculating the coefficients of multiple-regression models.
+#### RIDGE Regression
+The first variation is called ridge regression, which adds penalties to squared value of regression coefficients.
 
 Initializing independent variables(x) and dependent variable(y) for framing train and test data from the data set.
 
@@ -639,8 +613,8 @@ ridge.mod=glmnet(x_train,y_train,alpha=0,grid=grid)
 plot(ridge.mod)
 ```
 
-###Using Grid search to find the optimal lambda value 
 
+##### Using Grid search to find the optimal lambda value 
 ```{r}
 # set.seed(1)
 # ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
@@ -677,25 +651,23 @@ ssr_cv <- t(y_test - y_hat_cv) %*% (y_test - y_hat_cv)
 
 
 rsq_ridge_cv <- cor(y_test, y_hat_cv)^2
-rsq_ridge_cv
+adjrsq_ridge_cv = 1 - (1 - rsq_ridge_cv ^2) * (nrow(x_test) - 1) / (nrow(x_test) - ncol(x_test) -1)
 
-#MSE on test
-mse0 <- mean((y_test - y_hat_cv) ^ 2)
-sqrt(mse0)
+#RMSE on test
+mse0 <- sum((y_test - y_hat_cv) ^ 2) / (nrow(x_test) - ncol(x_test) -1)
+rse0 = sqrt(mse0)
 
-print("R-sqaured")
-print(rsq_ridge_cv)
-print("MSE on test")
-print(mse0)
+print("Adjusted R-sqaured")
+print(adjrsq_ridge_cv)
+print("residual standard error on test")
+print(rse0)
 ```
 
-
-
-
-### LASSO Regression
-Lasso regression is a sort of shrinkage-based linear regression. Data values shrunk towards a central point, such as the mean, in shrinkage. Simple, sparse models are encouraged by the lasso approach (i.e. models with fewer parameters).The purpose of lasso regression is to find the subset of predictors that produces the least amount of prediction error for a quantitative response variable.
+#### LASSO Regression
+The second variation is called Lasso regression, which adds penalty terms to absolute value of regression coefficients. It is a sort of shrinkage-based linear regression. Data values shrunk towards a central point, such as the mean, in shrinkage. Simple, sparse models are encouraged by the lasso approach (i.e. models with fewer parameters).The purpose of lasso regression is to find the subset of predictors that produces the least amount of prediction error for a quantitative response variable.
 
 Initializing independent variables(x) and dependent variable(y) for framing train and test data from the data set.
+
 ```{r}
 grid=10^seq(10,-2,length=100)
 lasso.mod=glmnet(x_train,y_train,alpha=1,grid=grid) 
@@ -738,33 +710,115 @@ print(rsq_lasso_cv)
 ```
 
 
-Therefore, combined with evaluation of dependent variable, PatternSix concluded that addressed assumptions of the final model were met and the model was fit before further testing.
+### Dimensionality Reduction
+The principle behind the other approach is dimensionality reduction. 
+Similar to the first approach, two variations existed. But for this approach, they differ in much more areas, thus could be counted as two distinct methods. As will be discovered below, both originally were developed originally to solve small sample size relative to variable quantities problem. Excellent byproduct of solving multi-collinearity was the reason these powerful tools were widely influential in the community.
 
 
-## Part 2 - Conclusion and Discussions
+#### Principle Component Regression (PCR)
+The first method is called principle component regression (PCR), which is based on the idea principle component analysis (PCA). It transformed independent variables into lower dimensional components, and each is a linear function of all original variables while remaining independent with each other.
 
-The table below gives the comparison of different models.
+```{r principle-component-regression}
+library(pls)
+library(tidyverse)
+df_normal %>% select_if(negate(is.numeric))-> df_cat
+df_stdize = cbind(scale(subset(df_numerical, select =-price)), price_normal, df_cat)
+pcr1 = pcr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos,                     2)+up_counter+manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+             is_exchangeable+state, data = df_stdize, validation = "CV")
+summary(pcr1)
 
-```{r tables}
-library(kableExtra)
-d = data.frame(rbind( c( 86.1, 86.1, 5.76), c( 88.3, 88.3, 4.85), c( 88.5, 88.5, 4.77), c( 999, 999, 999), c( 89.7, '--', 4.28)), row.names = c('Base Model','Polynomial Terms ','Interaction Terms','PLS Regression','Ridge Regression'))
-colnames(d) = c('R-Square', 'Adjusted R-Square', 'Mean Square Error')
-kbl(d) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+sec = 1:pcr1$ncomp
+RSE = vector(length = pcr1$ncomp)
+for(i in sec)
+  {
+  RSE[i] = sqrt(mvrValstats(pcr1, ncomp = i, estimate = "train")$SSE[2]/(nrow(df_stdize) - i - 1))
+}
+plot(sec, RSE, main="RSE PCR Price", xlab="components", ylab = "residual standard error")
+min_comp = which.min(RSE)
+min_val = min(RSE)
+points(min_comp, min_val, pch=1, col="red", cex=1.5)
 ```
 
+However, from the residual standard error graph, it can be observed that minimum is reached around using all components. Thus, this method was abandoned with out further testing.
 
 
+#### Partial Least Square 
+The second method is called partial least square (PLS). It differs with PCR in that when searching for linear functions of all independent variables, it also takes into account relationships between these variables and the dependent variable, thus ultimately only selecting partial independent variables, hencing the name.
 
+To find the optimal number of variables to choose from, PatternSix desired the model with number of variables yielding residual standard error. 
+
+```{r partial-least-square-optimal-components}
+pls1 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data            = df_stdize, validation = "CV")
+
+summary(pls1, what = "all")
+
+sec = 1:pls1$ncomp
+RSE = vector(length = pls1$ncomp)
+for(i in sec)
+  {
+  RSE[i] = sqrt(mvrValstats(pls1, ncomp = i, estimate = "train")$SSE[2]/(nrow(df_stdize) - i - 1))
+}
+plot(sec, RSE, main="RSE PLS Price", xlab="components", ylab = "residual standard error")
+min_comp = which.min(RSE)
+min_val = min(RSE)
+points(min_comp, min_val, pch=1, col="red", cex=1.5)
+```
+
+It can be found that `r min_comp` components out of the original 97 independent variables would yield the smallest RSE `r min_val`. 
+
+```{r partial-least-square-final}
+pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capacity)+poly(number_of_photos, 2)+up_counter
+           +manufacturer_name+color+transmission+engine_fuel+body_type+has_warranty+state+drivetrain+is_exchangeable+state, data             = df_stdize, jackknife = TRUE, validation = "CV", ncomp = min_comp)
+```
+
+When compiling the final model, a method called jackknife is utilized to extract jackknifed regression coefficients, which can be used for hypothethis testing.
+
+```{r partial-least-square-test}
+resid = pls2$residuals 
+yfitted = pls2$fitted.values
+plot(yfitted, resid, xlab = "fitted values", ylab = "Residuals", main = "Residuals vs Fitted")
+
+adjr2 = 1 - (1 - R2(pls2, ncomp = min_comp)$val[2] ^2) * (nrow(df_stdize) - 1) / (nrow(df_stdize) - min_comp - 1)
+rsePls2 = sqrt(mvrValstats(pls2, ncomp = min_comp, estimate = "train")$SSE[2]/(nrow(df_stdize) - min_comp - 1))
+jack.test(pls2)
+```
+
+Compared with final model before solving multicollinearity, the adjusted R-squared is lower  at `r adjr2` and residual standard error at `r rsePls2`. Majority of the regression coefficients are still significant.
+
+## Part 2 - Conclusion and discussion
+The table below gives the comparison of different models.
+```{r model-comparison}
+library(kableExtra)
+d = data.frame(rbind( c(summary(fit1)$adj.r.squared, summary(fit1)$sigma), c(summary(fit2)$adj.r.squared, summary(fit2)$sigma), c(summary(fit3)$adj.r.squared, summary(fit3)$sigma), c(adjrsq_ridge_cv, rse0), c(adjr2, rsePls2)), row.names = c('Base Model','Polynomial Terms ','Interaction Terms','Ridge Regression', 'PLS Regression'))
+colnames(d) = c('Adjusted R-Square', 'Residual Standard Error')
+kbl(d) %>%
+kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+`ridge regression` and `PLS` both have significantly lower adjusted r-squared score which is understandable, since they both sacrifice biases for better confidence, with `PLS` at `r adjr2` edged over `ridge regression` at `r adjrsq_ridge_cv`. However residual standard errors differ a lot. `PLS` did not sacrifice at all at `r rsePls2` while `ridge regression` increased to `r rse0`.
+
+
+```{r regression-methods-assumptions}
+library(kableExtra)
+d2 = data.frame(rbind( c("Independent Variables are independent", "Independent Variables can be dependent"), c("Values for Independent Variables have to be precise", "Values for Independent Variables can have errors"), c("Residuals have to be randomlly distributed", "Residuals do not need to be random")))
+colnames(d2) = c("OLS, Ridge Regression", 'PCR, PLS')
+kbl(d2) %>%
+kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+According to Frank L.E. and Friedman (1993), table above summarized assumptions for each regression method. In turn, it is concluded `PLS` and `PCR` are preferable due to limited assumptions required.
+
+Combined with testing results from different methods shown in the first table, PatternSix decided to choose the `PLS` model with variables of coefficient with at least 99% confidence as the final one. 
 
 ```{r}
 # Aasish_Wanted = data.frame(manufacturer_name ='Audi', model_name='A6', transmission='automatic', color='white', odometer_value = 4600, year_produced = 2015, engine_fuel='gasoline', engine_has_gas='False', engine_type = 'gasoline', engine_capacity=3.0, body_type = 'universal', has_warranty='False', state= 'owned', drivetrain='all', is_exchangeable='False', number_of_photos = 10, up_counter = 14)
-
+# 
 # pls2.pred = predict(fit3, Aasish_Wanted, type='response')
 # pls2.pred
-# plot(testY, pls2.pred, ylim=c(-11,2), xlim=c(-11,2),main="Test Dataset", xlab="observed", ylab="PLS Predicted")
-# abline(0, 1, col="red")
-# pls.eval=data.frame(obs=solTestY, pred=pls.pred2[,1,1])
+# # plot(testY, pls2.pred, ylim=c(-11,2), xlim=c(-11,2),main="Test Dataset", xlab="observed", ylab="PLS Predicted")
+# # abline(0, 1, col="red")
+# # pls.eval=data.frame(obs=solTestY, pred=pls.pred2[,1,1])
 # defaultSummary(pls.eval)
 
 ```
@@ -777,7 +831,12 @@ https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-ca
 Isidore, C. (2021, September 28). Retrieved from CNN Business: 
 https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
 
+
 AC Atkinson (1982). Plots, Transformations and Regression: A Introduction to Graphical methods
 of Diagnostic Residual Analysis. Oxford University Press.
 
+
 DA Belsley, E Kuh and RE Welsch (1980). Regression Diagnostics: Identifying Influential Data and Sources of Collinearity. Wiley.
+
+
+L.E.Frank, J.H.Friedman. A statistical View of Some Chemometrics Regression Tools. Technometrics, 1993， 35 (2): 109 - 135.
