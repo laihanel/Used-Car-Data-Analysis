@@ -36,6 +36,9 @@ In the second part of the work, PatternSix generated some regressions with price
 After conducting the EDA and hypothesis tests on the data, the team has concluded that the initial SMART research question were successful answered.
 
 ## References
+Ben Ellencweig, Sam Ezratty, Dan Fleming, and Itai Miller. (2019, June 6). Mckinsey & Company. Retrieved from Mckinsey & Company Website:
+https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/used-cars-new-platforms-accelerating-sales-in-a-digitally-disrupted-market
+
 Isidore, C. (2021, September 28). Retrieved from CNN Business: 
 https://www.wraltechwire.com/2021/09/28/bad-news-car-buyers-chip-shortage-supply-chain-woes-are-worse-than-we-thought/
 
