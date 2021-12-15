@@ -478,7 +478,7 @@ plot(fit1,which=1)
 # mean(fit1$residuals^2)
 ```
 
-At the first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and mean square error(MSE) at `r mean(fit1$residuals^2)`. Significance test also yielded positive results. P-value less than $2*10^(-16)$ verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
+At the first glance, the model was quite a compatible fit, with adjusted R-squared at `r summary(fit1)$adj.r.squared` and mean square error(MSE) at `r mean(fit1$residuals^2)`. Significance test also yielded positive results. P-value less than 2*10^(-16) verified linear relationship. In addition, majority of regression coefficients passed the t-test. However, residual plot indicated assumptions about errors were not satisfied.
 
 ### Polynomial Terms
 
@@ -508,7 +508,7 @@ plot(fit2,which=1)
 The results validated the intuitions behind these methods.The adjusted R-squared(`r summary(fit2)$adj.r.squared`)increases and MSE (`r mean(fit2$residuals^2)`) decreases, with a still significant linear relationship and significant regression coefficients at large. More importantly, the residual plot displayed an evident improvement.
 
 
-### Interaction Term
+### Interaction Terms
 PatternSix is a team dedicated to its craft. When correlation plot was generated during EDA, it could be observed that `odometer_value` and `year_produced` are closely correlated at `r cor(df_normal$odometer_value, df$year_produced)`, prompting decisions to check whether interactions between these two terms would be a better fit.
 
 ```{r interction-term-check}
@@ -595,8 +595,9 @@ coef(pls2)
 ```
 
 
-### REGULARIZATION
-#### RIDGE
+
+### RIDGE Regression
+
 In situations when the independent variables are highly correlated, ridge regression is a method of calculating the coefficients of multiple-regression models.
 
 Initializing independent variables(x) and dependent variable(y) for framing train and test data from the data set.
@@ -630,7 +631,7 @@ y_test = test$price_normal %>% unlist()
 # y_test = test %>% select(price) %>% unlist() # %>% as.numeric()
 ```
 
-Building Ridge Model
+
 ```{r}
 library("glmnet")
 grid=10^seq(10,-2,length=100)
@@ -639,6 +640,7 @@ plot(ridge.mod)
 ```
 
 ###Using Grid search to find the optimal lambda value 
+
 ```{r}
 # set.seed(1)
 # ridge_cv=cv.glmnet(x_train,y_train,alpha=0, standardize = TRUE, nfolds = 10)  # Fit ridge regression model on training data
@@ -657,7 +659,7 @@ Cross validation involves the following steps:
 
   1. Allocate a sample data set for study.
   2. Use the rest of the data set to train the model.
-  3. Use the test (validation) set's reserve sample. This will assist you in determining how effective your model's performance is.        Proceed with the existing model if your model produces a positive result on validation data. It's fantastic!
+  3. Use the test (validation) set's reserve sample. This will assist you in determining how effective your model's performance is.Proceed with the existing model if your model produces a positive result on validation data. It's fantastic!
 
 Performed prediction for the model, R-Squared test to check how model fits the set of observations and MSE test to check how close the estimates are close to the actual values.
 
@@ -673,7 +675,7 @@ model_cv <- glmnet(x_train,y_train, alpha = 0, lambda = lambda_cv,  standardize 
 y_hat_cv <- predict(model_cv, x_test)
 ssr_cv <- t(y_test - y_hat_cv) %*% (y_test - y_hat_cv)
 
-#R-sqaured
+
 rsq_ridge_cv <- cor(y_test, y_hat_cv)^2
 rsq_ridge_cv
 
@@ -686,6 +688,9 @@ print(rsq_ridge_cv)
 print("MSE on test")
 print(mse0)
 ```
+
+
+
 
 ### LASSO Regression
 Lasso regression is a sort of shrinkage-based linear regression. Data values shrunk towards a central point, such as the mean, in shrinkage. Simple, sparse models are encouraged by the lasso approach (i.e. models with fewer parameters).The purpose of lasso regression is to find the subset of predictors that produces the least amount of prediction error for a quantitative response variable.
@@ -736,7 +741,7 @@ print(rsq_lasso_cv)
 Therefore, combined with evaluation of dependent variable, PatternSix concluded that addressed assumptions of the final model were met and the model was fit before further testing.
 
 
-## Conclusion and Discussions
+## Part 2 - Conclusion and Discussions
 
 The table below gives the comparison of different models.
 
