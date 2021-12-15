@@ -665,7 +665,7 @@ print(rmse0)
 ```
 
 #### LASSO Regression
-Lasso regression is a sort of shrinkage-based linear regression. Data values shrunk towards a central point, such as the mean, in shrinkage. Simple, sparse models are encouraged by the lasso approach (i.e. models with fewer parameters).The purpose of lasso regression is to find the subset of predictors that produces the least amount of prediction error for a quantitative response variable.
+The second variation is called Lasso regression, which adds penalty terms to absolute value of regression coefficients. It is a sort of shrinkage-based linear regression. Data values shrunk towards a central point, such as the mean, in shrinkage. Simple, sparse models are encouraged by the lasso approach (i.e. models with fewer parameters).The purpose of lasso regression is to find the subset of predictors that produces the least amount of prediction error for a quantitative response variable.
 
 Initializing independent variables(x) and dependent variable(y) for framing train and test data from the data set.
 
