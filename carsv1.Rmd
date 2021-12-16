@@ -1,8 +1,7 @@
 ---
 title: "Analysis of Belarus Used Car Market"
 author: "Team PatternSix"
-date: "11/9/2021"
-# date: "`r Sys.Date()`"
+date: "`r Sys.Date()`"
 output:
   rmdformats::readthedown:
     code_folding: hide
@@ -500,7 +499,7 @@ plot(fit2,which=1)
 #summary(fit2)$sigma
 ```
 
-The results validated the intuitions behind these methods.The adjusted R-squared `r summary(fit2)$adj.r.squared` and residual standard error `r summary(fit2)$sigma` both decreased, with a still significant linear relationship and significant regression coefficients at large. More importantly, the residual plot displayed an evident improvement. 
+The results validated the intuitions behind these methods.The adjusted R-squared `r summary(fit2)$adj.r.squared` increased and the residual standard error `r summary(fit2)$sigma` decreased, with a still significant linear relationship and significant regression coefficients at large. More importantly, the residual plot displayed an evident improvement. 
 
 
 ### Interaction Terms
@@ -574,8 +573,7 @@ Two variations existed. Both share significant similarities while differ in some
 
 #### RIDGE Regression
 
-Additionally, the team decided to build the Ridge regression model to deal with the issue of multicollinearity. 
-Ridge regression is an extension of linear regression where the loss function is modified to minimize the complexity of the model. This modification is done by adding a penalty parameter that is equivalent to the square of the magnitude of the coefficients.
+The first variation is called ridge regression. It is an extension of linear regression where the loss function is modified to minimize the complexity of the model. This modification is done by adding a penalty parameter that is equivalent to the square of the magnitude of the coefficients.
 
 Loss function = OLS + alpha * summation (squared coefficient values)
 
@@ -670,7 +668,7 @@ ssr_cv <- t(y_test - y_hat_cv) %*% (y_test - y_hat_cv)
 rsq_ridge_cv <- cor(y_test, y_hat_cv)^2
 adjrsq_ridge_cv = 1 - (1 - rsq_ridge_cv ^2) * (nrow(x_test) - 1) / (nrow(x_test) - ncol(x_test) -1)
 
-#RMSE on test
+#RSE on test
 mse0 <- sum((y_test - y_hat_cv) ^ 2) / (nrow(x_test) - ncol(x_test) -1)
 rse0 = sqrt(mse0)
 
@@ -680,11 +678,11 @@ print("residual standard error on test")
 print(rse0)
 ```
 
-It was observed that the lowest value of residual standard error on test for the computed lambda value is `r rse0` and the adjusted R-squared value to be `r adjrsq_ridge_cv`
+It was observed that the lowest value of residual standard error on test for the computed lambda value is `r rse0` and the adjusted R-squared value to be `r adjrsq_ridge_cv`.
 
 
 #### LASSO Regression
-The second variation is called Lasso regression, which adds penalty terms to absolute value of regression coefficients. Lasso regression, or the Least Absolute Shrinkage and Selection Operator, is also a modification of linear regression. In lasso, the loss function is modified to minimize the complexity of the model by limiting the sum of the absolute values of the model coefficients (also called the l1-norm).
+The second variation is called Lasso regression, which adds penalty terms to absolute value of regression coefficients. Also named as Least Absolute Shrinkage and Selection Operator, it is also a modification of linear regression. In lasso, the loss function is modified to minimize the complexity of the model by limiting the sum of the absolute values of the model coefficients (also called the l1-norm).
 
 The loss function for lasso regression can be expressed as below:
 
@@ -727,19 +725,25 @@ model_cv_lasso <- glmnet(x, y, alpha = 1, lambda = lambda_cv, standardize = TRUE
 y_hat_cv <- predict(model_cv_lasso, x_test)
 ssr_cv <- t(y_test - y_hat_cv) %*% (y_test - y_hat_cv)
 rsq_lasso_cv <- cor(y_test, y_hat_cv)^2
+adjrsq_lasso_cv = 1 - (1 - rsq_lasso_cv ^2) * (nrow(x_test) - 1) / (nrow(x_test) - ncol(x_test) -1)
 
-plot(model_cv_lasso, xvar = "lambda")
+#RSE on test
+mse1 <- sum((y_test - y_hat_cv) ^ 2) / (nrow(x_test) - ncol(x_test) -1)
+rse1 = sqrt(mse1)
 
-print(ssr_cv)
-print(rsq_lasso_cv)
+print("Adjusted R-sqaured")
+print(adjrsq_lasso_cv)
+print("residual standard error on test")
+print(rse1)
+
 ```
-It was observed that the lowest value of MSE on test for the computed lambda value is `r ssr_cv` and the R-squared value to be `r rsq_lasso_cv`
+It was observed that the lowest value of residual standard error on test for the computed lambda value is `r rse1` and the adjusted R-squared value to be `r adjrsq_lasso_cv`
 
 
 
 ### Dimensionality Reduction
 The principle behind the other approach is dimensionality reduction. 
-Similar to the first approach, two variations existed. But for this approach, they differ in much more areas, thus could be counted as two distinct methods. As will be discovered below, both originally were developed originally to solve small sample size relative to variable quantities problem. Excellent byproduct of solving multi-collinearity was the reason these powerful tools were widely influential in the community.
+Similar to the first approach, two variations existed. But for this approach, they differ in much more areas, thus could be counted as two distinct methods. As will be discovered below, both originally were developed to solve small sample size relative to variable quantities problem. Excellent byproduct of solving multi-collinearity was the reason these powerful tools were widely influential in the community.
 
 
 #### Principle Component Regression (PCR)
@@ -801,9 +805,9 @@ pls2 = plsr(price_normal ~ odometer_value*poly(year_produced, 2)+sin(engine_capa
 When compiling the final model, a method called jackknife is utilized to extract jackknifed regression coefficients, which can be used for hypothethis testing.
 
 ```{r partial-least-square-test}
-resid = pls2$residuals 
-yfitted = pls2$fitted.values
-plot(yfitted, resid, xlab = "fitted values", ylab = "Residuals", main = "Residuals vs Fitted")
+# resid = pls2$residuals 
+# yfitted = pls2$fitted.values
+# plot(yfitted, resid, xlab = "fitted values", ylab = "Residuals", main = "Residuals vs Fitted")
 
 adjr2 = 1 - (1 - R2(pls2, ncomp = min_comp)$val[2] ^2) * (nrow(df_stdize) - 1) / (nrow(df_stdize) - min_comp - 1)
 rsePls2 = sqrt(mvrValstats(pls2, ncomp = min_comp, estimate = "train")$SSE[2]/(nrow(df_stdize) - min_comp - 1))
@@ -816,19 +820,19 @@ Compared with final model before solving multicollinearity, the adjusted R-squar
 The table below gives the comparison of different models.
 ```{r model-comparison}
 library(kableExtra)
-d = data.frame(rbind( c(summary(fit1)$adj.r.squared, summary(fit1)$sigma), c(summary(fit2)$adj.r.squared, summary(fit2)$sigma), c(summary(fit3)$adj.r.squared, summary(fit3)$sigma), c(adjrsq_ridge_cv, rse0), c(adjr2, rsePls2)), row.names = c('Base Model','Polynomial Terms ','Interaction Terms','Ridge Regression', 'PLS Regression'))
+d = data.frame(rbind( c(summary(fit1)$adj.r.squared, summary(fit1)$sigma), c(summary(fit2)$adj.r.squared, summary(fit2)$sigma), c(summary(fit3)$adj.r.squared, summary(fit3)$sigma), c(adjrsq_ridge_cv, rse0), c(adjrsq_lasso_cv, rse1), c(adjr2, rsePls2)), row.names = c('Base Model','Polynomial Terms ','Interaction Terms','Ridge Regression', "Lasso Regression", 'PLS Regression'))
 colnames(d) = c('Adjusted R-Square', 'Residual Standard Error')
 kbl(d) %>%
 kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-`ridge regression` and `PLS` both have significantly lower adjusted r-squared score which is understandable, since they both sacrifice biases for better confidence, with `PLS` at `r adjr2` edged over `ridge regression` at `r adjrsq_ridge_cv`. However residual standard errors differ a lot. `PLS` did not sacrifice at all at `r rsePls2` while `ridge regression` increased to `r rse0`.
+`Ridge Regression` , `Lasso Regression` and `PLS` all have significantly lower adjusted r-squared score which is understandable, since they all sacrifice biases for better confidence, with `Lasso Regression` at `r adjrsq_lasso_cv` edged over `PLS` at `r adjr2` and `Ridge Regression` at `r adjrsq_ridge_cv`. However residual standard errors differ a lot. `Lasso Regression` significantly outperformed all other models at `r rse1` while `PLS` stayed the same level at `r rsePls2`. `Ridge Regression`, however, had its RSE increased to `r rse0`.
 
 
 ```{r regression-methods-assumptions}
 library(kableExtra)
 d2 = data.frame(rbind( c("Independent Variables are independent", "Independent Variables can be dependent"), c("Values for Independent Variables have to be precise", "Values for Independent Variables can have errors"), c("Residuals have to be randomlly distributed", "Residuals do not need to be random")))
-colnames(d2) = c("OLS, Ridge Regression", 'PCR, PLS')
+colnames(d2) = c("OLS, Lasso, Ridge Regression", 'PCR, PLS')
 kbl(d2) %>%
 kable_styling(bootstrap_options = c("striped", "hover"))
 
@@ -836,7 +840,7 @@ kable_styling(bootstrap_options = c("striped", "hover"))
 
 According to Frank L.E. and Friedman (1993), table above summarized assumptions for each regression method. In turn, it is concluded `PLS` and `PCR` are preferable due to limited assumptions required.
 
-Combined with testing results from different methods shown in the first table, PatternSix decided to choose the `PLS` model with variables of coefficient with at least 99% confidence as the final one. 
+Combined with testing results from different methods shown in the first table, PatternSix concluded `Lasso Regression` is the best price prediction model due to the lowest RSE.
 
 The results of regressions both suggest that the year produced is the most critical parameter in price prediction since it has the highest coefficients. In contrast, the odometer value has a lower coefficient than expected. One reason is that the interaction term between odometer value and year produced provides information for this feature. From the result of the PLS model, Porsche has the highest price (coefficient = 2.14), and vehicles from Geely have the lowest price (coefficient=-7.24) compared with the other manufacturers. There is no significant difference between the different colors of cars; the baseline black has a slightly higher price than other colors. For the body type, limousine vehicle has the most decisive influence on price for sure. The variance of coefficients between different body types is significant, so this is an important feature that needs to be concerned when purchasing a car. The result shows other features that provide us with engine fuel type, and vehicle state.
 
